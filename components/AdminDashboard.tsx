@@ -1,17 +1,20 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { CivicIssue, Status, Category, User, Department } from '../types';
+import { CivicIssue, Status, Category, User, Department, View } from '../types';
 import { getIssues, updateIssueStatus } from '../services/issueService';
 import { ISSUE_CATEGORIES, STATUSES } from '../constants';
 import IssueCard from './IssueCard';
 import Notification from './Notification';
 import CustomSelect from './CustomSelect';
+import StatCard from './StatCard';
 
 interface AdminDashboardProps {
   currentUser: User;
   selectedDepartment: Department | null;
+  navigateTo: (view: View) => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDepartment }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDepartment, navigateTo }) => {
   const [issues, setIssues] = useState<CivicIssue[]>([]);
   const [filteredIssues, setFilteredIssues] = useState<CivicIssue[]>([]);
   const [filters, setFilters] = useState<{ status: Status | 'all'; category: Category | 'all' }>({
@@ -30,15 +33,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDe
     loadIssues();
   }, []);
 
+  const departmentForView = currentUser.department || selectedDepartment;
+
   const departmentIssues = useMemo(() => {
     // Super admin uses session department, dept admin uses their own assigned dept
-    const departmentToFilter = currentUser.department || selectedDepartment;
-    if (departmentToFilter) {
-        return issues.filter(issue => issue.department === departmentToFilter);
+    if (departmentForView) {
+        return issues.filter(issue => issue.department === departmentForView);
     }
     // Super admin before selecting a department (shows all)
     return issues;
-  }, [issues, currentUser, selectedDepartment]);
+  }, [issues, departmentForView]);
 
 
   useEffect(() => {
@@ -64,7 +68,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDe
   }, [departmentIssues, filters, searchQuery]);
 
   const handleStatusChange = (id: string, status: Status) => {
-    const updatedIssue = updateIssueStatus(id, status);
+    const { updatedIssue } = updateIssueStatus(id, status);
     if (updatedIssue) {
       loadIssues();
       setNotification(`Status for issue #${id.slice(-6)} updated to ${status}.`);
@@ -81,23 +85,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDe
     }, { total: 0, resolved: 0, inProgress: 0, pending: 0 });
   }, [departmentIssues]);
 
-  const dashboardTitle = currentUser.department 
-    ? `${currentUser.department} Department` 
-    : selectedDepartment 
-    ? `${selectedDepartment} Department (Admin View)`
+  const dashboardTitle = departmentForView
+    ? `${departmentForView} Department ${currentUser.department ? '' : '(Admin View)'}`.trim()
     : 'Manage All Reported Issues';
-
-  const StatCard: React.FC<{ title: string; value: number; icon: string; color: string }> = ({ title, value, icon, color }) => (
-    <div className={`bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-5`}>
-      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-          <i className={`fa-solid ${icon} text-2xl text-white`}></i>
-      </div>
-      <div>
-        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">{title}</p>
-        <p className="text-3xl font-bold text-slate-800 dark:text-white">{value}</p>
-      </div>
-    </div>
-  );
 
   return (
     <div className="space-y-10">
@@ -114,6 +104,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDe
         <StatCard title="In Progress" value={stats.inProgress} icon="fa-person-digging" color="bg-orange-500" />
         <StatCard title="Resolved" value={stats.resolved} icon="fa-check-circle" color="bg-green-500" />
       </div>
+
+      {departmentForView && (
+          <div className="bg-white dark:bg-slate-800/50 p-6 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 text-center">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Deep Dive into Your Data</h3>
+              <p className="text-slate-600 dark:text-slate-300 mb-4 max-w-lg mx-auto">Access detailed analytics, performance trends, and AI-powered insights for the {departmentForView} department.</p>
+              <button
+                onClick={() => navigateTo('reports')}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-8 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg text-base flex items-center justify-center gap-3 mx-auto"
+              >
+                <i className="fa-solid fa-chart-pie"></i>
+                View Performance Analytics
+              </button>
+          </div>
+      )}
 
       <div className="bg-white dark:bg-slate-800/50 p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 space-y-4">
         <div className="flex flex-col md:flex-row items-center gap-4">

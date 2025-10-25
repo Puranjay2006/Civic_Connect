@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { User, View } from '../types';
 
@@ -58,6 +59,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
                    <>
                     <NavLink view="home">Home</NavLink>
                     <NavLink view="admin">Admin Dashboard</NavLink>
+                    <NavLink view="reports">Reports</NavLink>
                     {!currentUser.department && <NavLink view="admin-department-select">Choose Department</NavLink>}
                   </>
                 ) : (
@@ -77,10 +79,25 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
                             <i className={`fa-solid fa-chevron-down text-xs transition-transform duration-200 ${isIssuesMenuOpen ? 'transform rotate-180' : ''}`}></i>
                         </button>
                         {isIssuesMenuOpen && (
-                            <div className="absolute top-full mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden dropdown-fade-in">
-                                <button onClick={() => { navigateTo('my-reports'); setIsIssuesMenuOpen(false); }} className="w-full text-left block px-5 py-4 text-base text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700/50 hover:pl-6 transition-all duration-200 cursor-pointer">My Reports</button>
-                                <button onClick={() => { navigateTo('report'); setIsIssuesMenuOpen(false); }} className="w-full text-left block px-5 py-4 text-base text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700/50 hover:pl-6 transition-all duration-200 cursor-pointer">Report Issue</button>
-                                <button onClick={() => { navigateTo('track'); setIsIssuesMenuOpen(false); }} className="w-full text-left block px-5 py-4 text-base text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700/50 hover:pl-6 transition-all duration-200 cursor-pointer">Track Issue</button>
+                            <div className="absolute top-full mt-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden dropdown-fade-in">
+                                <button onClick={() => { navigateTo('my-reports'); setIsIssuesMenuOpen(false); }} className="group w-full text-left flex items-center gap-3 px-5 py-4 text-base font-bold text-slate-700 dark:text-slate-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-indigo-600 hover:text-white dark:hover:text-white transition-all duration-200 cursor-pointer">
+                                    <span className="flex items-center gap-3 transition-transform duration-200 group-hover:translate-x-1">
+                                        <i className="fa-solid fa-file-lines w-5 text-center"></i>
+                                        <span>My Reports</span>
+                                    </span>
+                                </button>
+                                <button onClick={() => { navigateTo('report'); setIsIssuesMenuOpen(false); }} className="group w-full text-left flex items-center gap-3 px-5 py-4 text-base font-bold text-slate-700 dark:text-slate-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-indigo-600 hover:text-white dark:hover:text-white transition-all duration-200 cursor-pointer">
+                                    <span className="flex items-center gap-3 transition-transform duration-200 group-hover:translate-x-1">
+                                        <i className="fa-solid fa-bullhorn w-5 text-center"></i>
+                                        <span>Report Issue</span>
+                                    </span>
+                                </button>
+                                <button onClick={() => { navigateTo('track'); setIsIssuesMenuOpen(false); }} className="group w-full text-left flex items-center gap-3 px-5 py-4 text-base font-bold text-slate-700 dark:text-slate-300 hover:bg-gradient-to-r hover:from-blue-500 hover:to-indigo-600 hover:text-white dark:hover:text-white transition-all duration-200 cursor-pointer">
+                                    <span className="flex items-center gap-3 transition-transform duration-200 group-hover:translate-x-1">
+                                        <i className="fa-solid fa-magnifying-glass-chart w-5 text-center"></i>
+                                        <span>Track Issue</span>
+                                    </span>
+                                </button>
                             </div>
                         )}
                     </div>
@@ -137,6 +154,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
                   <>
                     <NavLink view="home">Home</NavLink>
                     <NavLink view="admin">Admin Dashboard</NavLink>
+                    <NavLink view="reports">Reports</NavLink>
                     {!currentUser.department && <NavLink view="admin-department-select">Choose Department</NavLink>}
                   </>
                 ) : (

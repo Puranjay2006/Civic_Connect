@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CivicIssue, User, View } from '../types';
 import { getIssues, addRatingToIssue } from '../services/issueService';
@@ -7,9 +8,10 @@ import Notification from './Notification';
 interface MyReportsProps {
   currentUser: User;
   navigateTo: (view: View, options?: { issueId?: string }) => void;
+  setCurrentUser: (user: User) => void;
 }
 
-const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo }) => {
+const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo, setCurrentUser }) => {
   const [myIssues, setMyIssues] = useState<CivicIssue[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -26,8 +28,11 @@ const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo }) => {
   }, [currentUser.id]);
 
   const handleRateIssue = (id: string, rating: number) => {
-    addRatingToIssue(id, rating);
+    const { updatedUser } = addRatingToIssue(id, rating);
     setNotification("Thank you for your feedback!");
+    if (updatedUser) {
+        setCurrentUser(updatedUser);
+    }
     loadMyIssues(); // Refresh the list to show the new rating
   };
 

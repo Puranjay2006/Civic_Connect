@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { User, View } from '../types';
-import { loginWithPasskey } from '../services/authService';
+import { User } from '../types';
+import { loginAsSuperAdmin } from '../services/authService';
+import AuthLayout from './AuthLayout';
 
 interface AdminLoginProps {
   onLogin: (user: User) => void;
-  navigateTo: (view: View) => void;
 }
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
@@ -12,49 +12,56 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handlePasskeySubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError(null);
+    setIsLoading(true);
     try {
-      const user = loginWithPasskey(passkey);
-      if (user) {
-        onLogin(user);
+      const adminUser = loginAsSuperAdmin(passkey);
+      if (adminUser) {
+        onLogin(adminUser);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-      <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">Admin Access Verification</h2>
-      <form onSubmit={handlePasskeySubmit} className="space-y-4">
+    <AuthLayout title="Super Admin Login">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg relative" role="alert">
+            <strong className="font-bold">Error: </strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
         <div>
-          <label htmlFor="passkey" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Admin Passkey</label>
+          <label htmlFor="passkey" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Super Admin Passkey
+          </label>
           <input
-            type="password"
             id="passkey"
+            name="passkey"
+            type="password"
+            required
             value={passkey}
             onChange={(e) => setPasskey(e.target.value)}
-            required
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:border-slate-600 transition"
           />
         </div>
-        {error && <p className="text-sm text-red-600 dark:text-red-400 text-center bg-red-100 dark:bg-red-900/50 p-3 rounded-lg">{error}</p>}
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-slate-600 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 disabled:bg-slate-400"
-        >
-          {isLoading ? <><i className="fa-solid fa-spinner animate-spin mr-2"></i>Verifying...</> : 'Login with Passkey'}
-        </button>
+        <div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-base font-medium text-white bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 disabled:from-slate-400 disabled:to-slate-500 disabled:opacity-70 disabled:scale-100 disabled:shadow-none transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:shadow-violet-500/30"
+          >
+            {isLoading ? <i className="fa-solid fa-spinner animate-spin"></i> : 'Authenticate'}
+          </button>
+        </div>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-        This login is for authorized personnel only.
-      </p>
-    </div>
+    </AuthLayout>
   );
 };
 

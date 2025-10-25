@@ -1,14 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
-import { View, CivicIssue } from '../types';
+import { View, CivicIssue, User } from '../types';
 import { getIssueById, addFeedbackToIssue } from '../services/issueService';
 import Notification from './Notification';
 
 interface FeedbackPageProps {
   issueId: string;
   navigateTo: (view: View) => void;
+  setCurrentUser: (user: User) => void;
 }
 
-const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo }) => {
+const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo, setCurrentUser }) => {
   const [issue, setIssue] = useState<CivicIssue | null>(null);
   const [feedback, setFeedback] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +37,10 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo }) => {
     setError(null);
     
     try {
-        addFeedbackToIssue(issueId, feedback);
+        const { updatedUser } = addFeedbackToIssue(issueId, feedback);
+        if (updatedUser) {
+            setCurrentUser(updatedUser);
+        }
         setNotification("Your feedback has been submitted successfully!");
         setTimeout(() => {
             navigateTo('my-reports');

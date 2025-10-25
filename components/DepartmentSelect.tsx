@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { Department } from '../types';
 import { DEPARTMENTS } from '../constants';
 
 interface DepartmentSelectProps {
-  onDepartmentSelect: (department: Department) => void;
+  onDepartmentSelect: (department: Department | null) => void;
 }
 
 const departmentIcons: { [key in Department]: string } = {
@@ -16,10 +17,10 @@ const departmentIcons: { [key in Department]: string } = {
 
 const DepartmentSelect: React.FC<DepartmentSelectProps> = ({ onDepartmentSelect }) => {
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="text-center mb-10">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Select Department</h2>
-        <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">Choose a department to view and manage its reported issues.</p>
+        <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">Choose a department to view and manage its reported issues, or manage all departments.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {DEPARTMENTS.map(dept => (
@@ -34,6 +35,17 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({ onDepartmentSelect 
             <h3 className="text-xl font-bold text-slate-800 dark:text-white">{dept}</h3>
           </button>
         ))}
+         <div className="md:col-span-2 lg:col-span-3">
+             <button
+                onClick={() => onDepartmentSelect(null)}
+                className="group w-full text-center p-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transform hover:-translate-y-2 transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/50 flex flex-col sm:flex-row items-center justify-center gap-6"
+             >
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 group-hover:bg-blue-500 dark:group-hover:bg-blue-600 transition-colors duration-300 shadow-md flex-shrink-0">
+                  <i className={`fa-solid fa-layer-group text-4xl text-slate-600 dark:text-slate-300 group-hover:text-white transition-colors duration-300`}></i>
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">Manage All Departments</h3>
+             </button>
+        </div>
       </div>
     </div>
   );

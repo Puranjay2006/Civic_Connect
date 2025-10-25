@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { CivicIssue, Status, Category, View } from '../types';
 import CustomSelect from './CustomSelect';
+// FIX: Import STATUSES constant for strongly-typed select options.
+import { STATUSES } from '../constants';
 
 interface RatingProps {
   onRate: (rating: number) => void;
@@ -152,7 +154,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, isAdmin, onStatusChange, i
               id={`status-${issue.id}`}
               value={issue.status}
               onChange={(value) => onStatusChange(issue.id, value as Status)}
-              options={Object.values(Status).map(s => ({ value: s, label: s }))}
+              options={STATUSES.map(s => ({ value: s, label: s }))}
             />
           </div>
         )}

@@ -117,6 +117,30 @@
   .open .hamburger-bottom {
     transform: rotate(-45deg) translateY(6px) translateX(-6px);
   }
+  
+  /* Added for text gradient animation */
+  .animated-text-gradient {
+    background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+    background-size: 200% auto;
+    color: #000;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: text-gradient-animation 5s linear infinite;
+  }
+  .dark .animated-text-gradient {
+    background: linear-gradient(to right, #60a5fa, #a78bfa, #f472b6, #60a5fa);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: text-gradient-animation 5s linear infinite;
+  }
+
+  @keyframes text-gradient-animation {
+    to {
+      background-position: 200% center;
+    }
+  }
 </style>
 <script>
   // Prevents FOUC by setting theme before page renders

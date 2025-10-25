@@ -31,7 +31,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, currentUser }) => {
             {currentUser.username.charAt(0).toUpperCase()}
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">
-            Welcome back, <span className="text-blue-600 dark:text-blue-400">{currentUser.isAdmin ? 'Admin' : currentUser.username}!</span>
+            Welcome back, <span className="animated-text-gradient">{currentUser.isAdmin ? 'Admin' : currentUser.username}!</span>
           </h1>
           <p className="max-w-3xl mx-auto text-lg text-slate-600 dark:text-slate-300 mb-8">
             {currentUser.isAdmin
@@ -40,20 +40,27 @@ const Home: React.FC<HomeProps> = ({ navigateTo, currentUser }) => {
             }
           </p>
           {currentUser.isAdmin ? (
-            <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <div className="mt-8 flex flex-wrap justify-center items-center gap-4">
               <button
                 onClick={() => navigateTo('admin')}
-                className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-10 rounded-full hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 shadow-xl text-lg flex items-center justify-center gap-3"
+                className="group w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 px-10 rounded-full hover:from-green-600 hover:to-emerald-700 transition-all transform hover:scale-105 hover:shadow-2xl text-lg flex items-center justify-center gap-3"
               >
-                <i className="fa-solid fa-clipboard-list"></i>
+                <i className="fa-solid fa-clipboard-list group-hover:rotate-[-6deg] transition-transform"></i>
                 Go to Admin Dashboard
+              </button>
+               <button
+                onClick={() => navigateTo('reports')}
+                className="group w-full sm:w-auto bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold py-4 px-10 rounded-full hover:from-purple-600 hover:to-violet-700 transition-all transform hover:scale-105 hover:shadow-2xl text-lg flex items-center justify-center gap-3"
+              >
+                <i className="fa-solid fa-chart-pie group-hover:rotate-6 transition-transform"></i>
+                View Performance Analytics
               </button>
               {!currentUser.department && (
                  <button
                     onClick={() => navigateTo('admin-department-select')}
-                    className="w-full sm:w-auto bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-4 px-10 rounded-full hover:bg-white/80 dark:hover:bg-slate-600/80 transition-all transform hover:scale-105 text-lg flex items-center justify-center gap-3"
+                    className="group w-full sm:w-auto bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-4 px-10 rounded-full hover:bg-white/80 dark:hover:bg-slate-600/80 transition-all transform hover:scale-105 hover:shadow-xl text-lg flex items-center justify-center gap-3"
                   >
-                    <i className="fa-solid fa-building-user"></i>
+                    <i className="fa-solid fa-building-user group-hover:scale-110 transition-transform"></i>
                     Choose Department
                   </button>
               )}
@@ -62,30 +69,30 @@ const Home: React.FC<HomeProps> = ({ navigateTo, currentUser }) => {
             <div className="flex flex-wrap justify-center items-center gap-4">
               <button
                 onClick={() => navigateTo('report')}
-                className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 px-10 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-xl text-lg flex items-center justify-center gap-3"
+                className="group w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-4 px-10 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 hover:shadow-2xl text-lg flex items-center justify-center gap-3"
               >
-                <i className="fa-solid fa-bullhorn"></i>
+                <i className="fa-solid fa-bullhorn group-hover:animate-pulse"></i>
                 Report an Issue
               </button>
                <button
                 onClick={() => navigateTo('my-reports')}
-                className="w-full sm:w-auto bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-bold py-4 px-10 rounded-full hover:from-teal-600 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-xl text-lg flex items-center justify-center gap-3"
+                className="group w-full sm:w-auto bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-bold py-4 px-10 rounded-full hover:from-teal-600 hover:to-cyan-700 transition-all transform hover:scale-105 hover:shadow-2xl text-lg flex items-center justify-center gap-3"
               >
-                <i className="fa-solid fa-file-lines"></i>
+                <i className="fa-solid fa-file-lines group-hover:translate-x-1 transition-transform"></i>
                 My Reports
               </button>
               <button
                 onClick={() => navigateTo('track')}
-                className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold py-4 px-10 rounded-full hover:from-purple-600 hover:to-violet-700 transition-all transform hover:scale-105 shadow-xl text-lg flex items-center justify-center gap-3"
+                className="group w-full sm:w-auto bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold py-4 px-10 rounded-full hover:from-purple-600 hover:to-violet-700 transition-all transform hover:scale-105 hover:shadow-2xl text-lg flex items-center justify-center gap-3"
               >
-                <i className="fa-solid fa-magnifying-glass-chart"></i>
+                <i className="fa-solid fa-magnifying-glass-chart group-hover:scale-110 transition-transform"></i>
                 Track Issue
               </button>
               <button
                 onClick={() => navigateTo('dashboard')}
-                className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold py-4 px-10 rounded-full hover:from-amber-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-xl text-lg flex items-center justify-center gap-3"
+                className="group w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold py-4 px-10 rounded-full hover:from-amber-600 hover:to-orange-700 transition-all transform hover:scale-105 hover:shadow-2xl text-lg flex items-center justify-center gap-3"
               >
-                <i className="fa-solid fa-chart-line"></i>
+                <i className="fa-solid fa-chart-line group-hover:-translate-y-1 transition-transform"></i>
                 View Dashboard
               </button>
             </div>
@@ -102,7 +109,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, currentUser }) => {
             <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
                 <div className="text-center md:text-left z-10">
                     <div className="bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/20">
-                        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white leading-tight mb-4">
+                        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white leading-tight mb-4 animated-text-gradient">
                         Civic Connect
                         </h1>
                         <p className="text-lg text-slate-600 dark:text-slate-300 mb-8">
@@ -110,32 +117,32 @@ const Home: React.FC<HomeProps> = ({ navigateTo, currentUser }) => {
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center md:justify-start items-center sm:items-start gap-6">
                             {/* User Login Button */}
-                            <div className="relative group w-full sm:w-auto">
+                             <div className="relative group/tooltip w-full sm:w-auto">
                                 <button
-                                onClick={() => navigateTo('login')}
-                                className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-8 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-xl text-base flex items-center justify-center gap-3"
-                                >
-                                <i className="fa-solid fa-right-to-bracket"></i>
-                                User Login / Sign Up
+                                    onClick={() => navigateTo('login')}
+                                    className="group/button w-full sm:w-auto bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-8 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 hover:shadow-2xl text-base flex items-center justify-center gap-3"
+                                    >
+                                    <i className="fa-solid fa-right-to-bracket group-hover/button:translate-x-1 transition-transform duration-200"></i>
+                                    User Login / Sign Up
                                 </button>
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-64 p-3 bg-slate-900 text-white text-sm rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300 ease-in-out invisible group-hover:visible pointer-events-none z-50">
-                                Report local issues with photos and location details.
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-slate-900"></div>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-3 bg-slate-900 text-white text-sm rounded-lg shadow-xl opacity-0 group-hover/tooltip:opacity-100 transform scale-95 group-hover/tooltip:scale-100 translate-y-1 group-hover/tooltip:translate-y-0 transition-all duration-300 ease-in-out invisible group-hover/tooltip:visible pointer-events-none z-50">
+                                    Access your dashboard, report new issues, and track their progress.
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-slate-900"></div>
                                 </div>
                             </div>
 
                             {/* Admin Login Button */}
-                            <div className="relative group w-full sm:w-auto">
+                            <div className="relative group/tooltip w-full sm:w-auto">
                                 <button
-                                onClick={() => navigateTo('admin-login')}
-                                className="w-full sm:w-auto bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 px-8 rounded-full hover:bg-white/80 dark:hover:bg-slate-600/80 transition-all transform hover:scale-105 text-base flex items-center justify-center gap-3"
+                                onClick={() => navigateTo('admin-role-select')}
+                                className="group/button w-full sm:w-auto bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold py-3 px-8 rounded-full hover:from-purple-600 hover:to-violet-700 transition-all transform hover:scale-105 hover:shadow-2xl text-base flex items-center justify-center gap-3"
                                 >
-                                <i className="fa-solid fa-user-shield"></i>
+                                <i className="fa-solid fa-user-shield group-hover/button:scale-110 transition-transform duration-200"></i>
                                 Admin Login
                                 </button>
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-64 p-3 bg-slate-900 text-white text-sm rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300 ease-in-out invisible group-hover:visible pointer-events-none z-50">
-                                Access the admin dashboard to review, update, and track reported issues.
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-b-8 border-b-slate-900"></div>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-64 p-3 bg-slate-900 text-white text-sm rounded-lg shadow-xl opacity-0 group-hover/tooltip:opacity-100 transform scale-95 group-hover/tooltip:scale-100 translate-y-1 group-hover/tooltip:translate-y-0 transition-all duration-300 ease-in-out invisible group-hover/tooltip:visible pointer-events-none z-50">
+                                Access departmental dashboards, advanced analytics, and administrative tools.
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-slate-900"></div>
                                 </div>
                             </div>
                         </div>
@@ -155,32 +162,32 @@ const Home: React.FC<HomeProps> = ({ navigateTo, currentUser }) => {
                     A simple, transparent process for community improvement in four easy steps.
                 </p>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div className="card-fade-in-up text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-lg border border-white/30 transform hover:-translate-y-2 transition-transform duration-300">
-                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-5 shadow-lg">
+                    <div className="group card-fade-in-up text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-lg hover:shadow-xl border border-white/30 hover:border-blue-300 dark:hover:border-blue-500 transform hover:-translate-y-2 transition-all duration-300">
+                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
                             <i className="fa-solid fa-camera text-4xl text-white"></i>
                         </div>
                         <h3 className="text-xl font-bold text-slate-800 dark:text-white">1. Report</h3>
                         <p className="mt-2 text-slate-600 dark:text-slate-300">See a problem? Snap a photo, add details, and submit your report in minutes.</p>
                     </div>
 
-                    <div className="card-fade-in-up text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-lg border border-white/30 transform hover:-translate-y-2 transition-transform duration-300" style={{ animationDelay: '0.2s' }}>
-                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-5 shadow-lg">
+                    <div className="group card-fade-in-up text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-lg hover:shadow-xl border border-white/30 hover:border-blue-300 dark:hover:border-blue-500 transform hover:-translate-y-2 transition-all duration-300" style={{ animationDelay: '0.2s' }}>
+                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-5 shadow-lg group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">
                             <i className="fa-solid fa-magnifying-glass-chart text-4xl text-white"></i>
                         </div>
                         <h3 className="text-xl font-bold text-slate-800 dark:text-white">2. Track</h3>
                         <p className="mt-2 text-slate-600 dark:text-slate-300">Get a unique ID and use our AI assistant to check the status of your report anytime.</p>
                     </div>
                     
-                    <div className="card-fade-in-up text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-lg border border-white/30 transform hover:-translate-y-2 transition-transform duration-300" style={{ animationDelay: '0.4s' }}>
-                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-5 shadow-lg">
+                    <div className="group card-fade-in-up text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-lg hover:shadow-xl border border-white/30 hover:border-blue-300 dark:hover:border-blue-500 transform hover:-translate-y-2 transition-all duration-300" style={{ animationDelay: '0.4s' }}>
+                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-5 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
                             <i className="fa-solid fa-people-roof text-4xl text-white"></i>
                         </div>
                         <h3 className="text-xl font-bold text-slate-800 dark:text-white">3. Resolve</h3>
                         <p className="mt-2 text-slate-600 dark:text-slate-300">City officials are notified, work on a solution, and update the status until it's fixed.</p>
                     </div>
 
-                    <div className="card-fade-in-up text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-lg border border-white/30 transform hover:-translate-y-2 transition-transform duration-300" style={{ animationDelay: '0.6s' }}>
-                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-5 shadow-lg">
+                    <div className="group card-fade-in-up text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-2xl shadow-lg hover:shadow-xl border border-white/30 hover:border-blue-300 dark:hover:border-blue-500 transform hover:-translate-y-2 transition-all duration-300" style={{ animationDelay: '0.6s' }}>
+                        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-5 shadow-lg group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">
                             <i className="fa-solid fa-map-marked-alt text-4xl text-white"></i>
                         </div>
                         <h3 className="text-xl font-bold text-slate-800 dark:text-white">4. View Impact</h3>

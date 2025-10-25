@@ -2,15 +2,16 @@ import { User, NotificationMessage, Department, NotificationType } from '../type
 
 const USERS_KEY = 'civic-users';
 const SESSION_KEY = 'civic-session';
-const ADMIN_PASSKEY = 'ykls_764'; // Super Admin
 
-// Department Admin Passkeys
-const DEPARTMENT_PASSKEYS: { [key in Department]?: string } = {
-    [Department.Electrical]: 'elec_123',
-    [Department.Water]: 'water_456',
-    [Department.Medical]: 'med_789',
-    [Department.Sanitation]: 'sani_101',
-    [Department.Roads]: 'roads_112',
+// New Passkey Structure
+const SUPER_ADMIN_PASSKEY = 'ykls_764';
+const MAIN_ADMIN_PASSKEY = 'ljn_987';
+const DEPARTMENT_PASSKEYS: { [key in Department]: string } = {
+    [Department.Electrical]: 'ljn_9871',
+    [Department.Water]: 'ljn_9872',
+    [Department.Medical]: 'ljn_9873',
+    [Department.Sanitation]: 'ljn_9874',
+    [Department.Roads]: 'ljn_9875',
 };
 
 // Helper to get users from localStorage
@@ -77,39 +78,41 @@ export const login = (identifier: string, password: string): User | null => {
   throw new Error('Invalid credentials.');
 };
 
-export const loginWithPasskey = (passkey: string): User | null => {
+export const verifyMainAdminPasskey = (passkey: string): boolean => {
+    return passkey === MAIN_ADMIN_PASSKEY;
+};
+
+export const loginAsSuperAdmin = (passkey: string): User => {
+    if (passkey !== SUPER_ADMIN_PASSKEY) {
+        throw new Error('Invalid Super Admin Passkey.');
+    }
     const users = getUsers();
+    let adminUser = users.find(u => u.email.toLowerCase() === 'admin@city.gov');
+    if (!adminUser) {
+        console.log("Super admin user not found, creating one.");
+        adminUser = signUp('admin', 'admin@city.gov', 'default_admin_password_placeholder');
+        if (!adminUser) throw new Error('Could not create super admin user.');
+    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify(adminUser));
+    return adminUser;
+}
+
+export const loginAsDepartmentAdmin = (department: Department, passkey: string): User => {
+    if (DEPARTMENT_PASSKEYS[department] !== passkey) {
+        throw new Error('Invalid Passkey for this department.');
+    }
     
-    // Super Admin
-    if (passkey === ADMIN_PASSKEY) {
-        let adminUser = users.find(u => u.email.toLowerCase() === 'admin@city.gov');
-        if (!adminUser) {
-            console.log("Super admin user not found, creating one.");
-            adminUser = signUp('admin', 'admin@city.gov', 'default_admin_password_placeholder');
-            if (!adminUser) throw new Error('Could not create super admin user.');
-        }
-        localStorage.setItem(SESSION_KEY, JSON.stringify(adminUser));
-        return adminUser;
+    const users = getUsers();
+    const deptEmail = `${department.toLowerCase()}@city.gov`;
+    let deptAdmin = users.find(u => u.email.toLowerCase() === deptEmail);
+
+    if (!deptAdmin) {
+        console.log(`Department admin for ${department} not found, creating one.`);
+        deptAdmin = signUp(department, deptEmail, 'default_dept_password', department);
+        if (!deptAdmin) throw new Error(`Could not create admin for ${department}.`);
     }
-
-    // Department Admin
-    for (const dept in DEPARTMENT_PASSKEYS) {
-        if (DEPARTMENT_PASSKEYS[dept as Department] === passkey) {
-            const department = dept as Department;
-            const deptEmail = `${department.toLowerCase()}@city.gov`;
-            let deptAdmin = users.find(u => u.email.toLowerCase() === deptEmail);
-
-            if (!deptAdmin) {
-                console.log(`Department admin for ${department} not found, creating one.`);
-                deptAdmin = signUp(department, deptEmail, 'default_dept_password', department);
-                if (!deptAdmin) throw new Error(`Could not create admin for ${department}.`);
-            }
-            localStorage.setItem(SESSION_KEY, JSON.stringify(deptAdmin));
-            return deptAdmin;
-        }
-    }
-
-    throw new Error('Invalid Admin Passkey.');
+    localStorage.setItem(SESSION_KEY, JSON.stringify(deptAdmin));
+    return deptAdmin;
 }
 
 export const logout = (): void => {
@@ -121,7 +124,7 @@ export const getCurrentUser = (): User | null => {
   return sessionJson ? JSON.parse(sessionJson) : null;
 };
 
-export const requestPasswordReset = (email: string): string | null => {
+export const requestPasswordReset = (email: string): void => {
     const users = getUsers();
     const userIndex = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
     
@@ -133,13 +136,17 @@ export const requestPasswordReset = (email: string): string | null => {
         users[userIndex].passwordResetExpires = expires;
         saveUsers(users);
         
-        console.log(`Password reset requested for ${email}. Token: ${token}`);
-        return token;
+        const resetLink = `#reset-password/${token}`;
+
+        // Create a rich simulated email notification
+        const emailContent = {
+            subject: "Your Password Reset Request",
+            body: `Hello ${users[userIndex].username},\n\nA password reset was requested for your Civic Connect account. If you did not make this request, you can safely ignore this email.\n\nTo reset your password, please click the button below. This link will expire in one hour.`,
+            cta: { text: 'Reset Your Password', link: resetLink }
+        };
+
+        addNotification(users[userIndex].id, 'A password reset was requested for your account.', NotificationType.PasswordReset, 'email', emailContent);
     }
-    
-    // For security, do not reveal if the user exists or not.
-    console.log(`Password reset requested for non-existing user: ${email}. No action taken.`);
-    return null;
 };
 
 export const resetPassword = (token: string, newPassword: string): void => {
@@ -159,28 +166,55 @@ export const resetPassword = (token: string, newPassword: string): void => {
 };
 
 
-export const addNotification = (userId: string, message: string, type: NotificationType): void => {
+export const addNotification = (
+    userId: string, 
+    message: string, 
+    type: NotificationType,
+    deliveryMethod: 'in-app' | 'email' = 'in-app',
+    emailContent?: NotificationMessage['emailContent']
+): User | null => {
     const users = getUsers();
     const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) return;
+    if (userIndex === -1) return null;
 
     const newNotification: NotificationMessage = {
-        id: `notif-${Date.now()}`,
+        id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         message,
         read: false,
         createdAt: Date.now(),
         type,
+        deliveryMethod,
+        emailContent,
     };
     
     users[userIndex].notifications.unshift(newNotification);
     saveUsers(users);
 
-    // Update current session if the notification is for the logged-in user
     const currentUser = getCurrentUser();
-    if (currentUser && currentUser.id === userId) {
-        currentUser.notifications.unshift(newNotification);
-        localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+    // Dispatch event for email simulation if it's an email and for the current user
+    if (deliveryMethod === 'email' && currentUser?.id === userId) {
+         const event = new CustomEvent('show-email-sim', { 
+            detail: {
+                ...emailContent,
+                recipient: users[userIndex].email
+            }
+        });
+        window.dispatchEvent(event);
+    } else if (deliveryMethod === 'in-app' && currentUser?.id === userId) {
+        // Dispatch event for in-app toast if it's for the current user
+        const event = new CustomEvent('show-toast', {
+            detail: newNotification
+        });
+        window.dispatchEvent(event);
     }
+
+    // Update current session if the notification is for the logged-in user
+    if (currentUser && currentUser.id === userId) {
+        const updatedUser = { ...currentUser, notifications: [newNotification, ...currentUser.notifications] };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
+        return updatedUser;
+    }
+    return null;
 };
 
 export const markNotificationsAsRead = (userId: string): User | null => {

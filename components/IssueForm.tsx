@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Category, CivicIssue, Department } from '../types';
 import { ISSUE_CATEGORIES, DEPARTMENTS } from '../constants';
 import { addIssue } from '../services/issueService';
 import CustomSelect from './CustomSelect';
+import { geocodeLocation, suggestDepartment } from '../services/geminiService';
 
 interface IssueFormProps {
   currentUser: User;
   onIssueReported: (issue: CivicIssue) => void;
+  setCurrentUser: (user: User) => void;
 }
 
-const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) => {
+// Debounce helper function to delay API calls
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+}
+
+const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported, setCurrentUser }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>(Category.Other);
@@ -22,6 +38,49 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
   const [showManualLocation, setShowManualLocation] = useState(false);
   const [manualLocationInput, setManualLocationInput] = useState('');
   const [manualLocationError, setManualLocationError] = useState<string | null>(null);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+
+  // State for AI department suggestion
+  const [isSuggestingDept, setIsSuggestingDept] = useState(false);
+  const [suggestedDept, setSuggestedDept] = useState<Department | 'unknown' | null>(null);
+  const [isManualDeptSelection, setIsManualDeptSelection] = useState(false);
+
+  // Debounce user input to avoid excessive API calls
+  const debouncedTitle = useDebounce(title, 700);
+  const debouncedDescription = useDebounce(description, 700);
+
+  // Effect to trigger AI suggestion
+  useEffect(() => {
+    const getSuggestion = async () => {
+      // Only run if user has not manually overridden and there's enough content
+      if (!isManualDeptSelection && (debouncedTitle.length > 5 || debouncedDescription.length > 10)) {
+        setIsSuggestingDept(true);
+        setSuggestedDept(null);
+        try {
+          const suggestion = await suggestDepartment(debouncedTitle, debouncedDescription, category);
+          setSuggestedDept(suggestion);
+          if (suggestion !== 'unknown') {
+            setDepartment(suggestion); // Automatically set the department state
+          } else {
+            setIsManualDeptSelection(true); // If AI is unsure, force manual selection
+          }
+        } catch (error) {
+          console.error("Department suggestion failed", error);
+          setSuggestedDept('unknown'); // On error, fallback to manual
+          setIsManualDeptSelection(true);
+        } finally {
+          setIsSuggestingDept(false);
+        }
+      }
+    };
+
+    getSuggestion();
+  }, [debouncedTitle, debouncedDescription, category, isManualDeptSelection]);
+
+  const handleManualDeptOverride = () => {
+    setIsManualDeptSelection(true);
+    setSuggestedDept(null); // Clear suggestion
+  };
 
   const handleGetLocation = () => {
     setIsGettingLocation(true);
@@ -47,21 +106,23 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
     }
   };
 
-  const handleManualLocationSubmit = (e: React.FormEvent) => {
+  const handleManualLocationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setManualLocationError(null);
-    const mockGeocode: { [key: string]: { lat: number, lng: number } } = {
-        "new york city": { lat: 40.7128, lng: -74.0060 },
-        "london": { lat: 51.5074, lng: -0.1278 },
-        "tokyo": { lat: 35.6895, lng: 139.6917 },
-    };
+    setIsGeocoding(true);
 
-    const foundLocation = mockGeocode[manualLocationInput.toLowerCase().trim()];
-    if (foundLocation) {
-        setLocation(foundLocation);
-        setShowManualLocation(false);
-    } else {
-        setManualLocationError("Location not found. Please try a major city like 'New York City' or 'London'.");
+    try {
+        const coordinates = await geocodeLocation(manualLocationInput);
+        if (coordinates) {
+            setLocation(coordinates);
+            setShowManualLocation(false);
+        } else {
+            setManualLocationError("Could not find the location. Please be more specific or try a different address.");
+        }
+    } catch (err) {
+        setManualLocationError("An error occurred while trying to find the location.");
+    } finally {
+        setIsGeocoding(false);
     }
   };
 
@@ -86,7 +147,10 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
     setError(null);
     try {
       const newIssueData = { title, description, category, photo, location, department };
-      const newIssue = addIssue(newIssueData, currentUser);
+      const { newIssue, updatedUser } = addIssue(newIssueData, currentUser);
+      if (updatedUser) {
+        setCurrentUser(updatedUser);
+      }
       onIssueReported(newIssue);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -112,15 +176,6 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
             <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
             <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Provide more details about the issue." required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:border-slate-600 transition" />
           </div>
-           <div>
-            <label htmlFor="department" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
-            <CustomSelect
-              id="department"
-              value={department}
-              onChange={(value) => setDepartment(value as Department)}
-              options={DEPARTMENTS.map(dep => ({ value: dep, label: dep }))}
-            />
-          </div>
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
             <CustomSelect
@@ -130,6 +185,49 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
               options={ISSUE_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
             />
           </div>
+           {/* Department Section */}
+            <div>
+              <label htmlFor="department" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
+              <div className="p-4 bg-slate-100 dark:bg-slate-700/50 rounded-lg space-y-2 min-h-[76px] flex flex-col justify-center">
+                {isSuggestingDept ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <i className="fa-solid fa-spinner animate-spin"></i>
+                    <span>AI is suggesting the best department...</span>
+                  </div>
+                ) : isManualDeptSelection ? (
+                  <>
+                    {suggestedDept === 'unknown' && (
+                       <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                          <i className="fa-solid fa-info-circle mr-1"></i>
+                          We couldn't automatically determine the department. Please select one.
+                       </p>
+                    )}
+                    <CustomSelect
+                      id="department"
+                      value={department}
+                      onChange={(value) => setDepartment(value as Department)}
+                      options={DEPARTMENTS.map(dep => ({ value: dep, label: dep }))}
+                    />
+                  </>
+                ) : suggestedDept ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <span className="font-bold text-lg text-slate-800 dark:text-white">{suggestedDept}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">
+                            AI Suggested
+                        </span>
+                    </div>
+                    <button type="button" onClick={handleManualDeptOverride} className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                   <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Start typing the title or description to get an AI-powered department suggestion.
+                   </p>
+                )}
+              </div>
+            </div>
           <div>
             <label htmlFor="photo" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Upload Photo</label>
             <input type="file" id="photo" accept="image/*" onChange={handleFileChange} required className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/50 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-900" />
@@ -162,7 +260,9 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
                       <label htmlFor="manual-location" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Enter your full address</label>
                       <div className="flex gap-2">
                         <input id="manual-location" type="text" value={manualLocationInput} onChange={(e) => setManualLocationInput(e.target.value)} className="flex-grow px-4 py-2 border border-slate-300 rounded-lg dark:bg-slate-700 dark:border-slate-600" />
-                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-slate-600 rounded-lg hover:bg-slate-700">Save</button>
+                        <button type="submit" disabled={isGeocoding} className="px-4 py-2 w-20 text-sm font-medium text-white bg-slate-600 rounded-lg hover:bg-slate-700 disabled:bg-slate-400 flex items-center justify-center">
+                           {isGeocoding ? <i className="fa-solid fa-spinner animate-spin"></i> : 'Save'}
+                        </button>
                       </div>
                       {manualLocationError && <p className="text-xs text-red-500">{manualLocationError}</p>}
                   </form>

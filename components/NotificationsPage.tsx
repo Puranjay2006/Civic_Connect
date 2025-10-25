@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, NotificationType } from '../types';
+import { User, NotificationType, NotificationMessage } from '../types';
 import { markNotificationsAsRead } from '../services/authService';
 
 interface NotificationsPageProps {
@@ -26,7 +26,24 @@ const notificationIcons: { [key in NotificationType]: { icon: string; color: str
   [NotificationType.StatusUpdate]: { icon: 'fa-arrows-rotate', color: 'text-blue-500' },
   [NotificationType.RatingReceived]: { icon: 'fa-star', color: 'text-yellow-500' },
   [NotificationType.FeedbackReceived]: { icon: 'fa-comment-dots', color: 'text-purple-500' },
+  [NotificationType.PasswordReset]: { icon: 'fa-key', color: 'text-orange-500' },
   [NotificationType.General]: { icon: 'fa-bell', color: 'text-slate-500' },
+  [NotificationType.Email]: { icon: 'fa-envelope', color: 'text-indigo-500' },
+};
+
+const deliveryIcons: { [key in NotificationMessage['deliveryMethod']]: string } = {
+    'in-app': 'fa-mobile-screen-button',
+    'email': 'fa-paper-plane'
+};
+
+const handleViewEmail = (notif: NotificationMessage) => {
+    const event = new CustomEvent('show-email-sim', { 
+        detail: {
+            ...notif.emailContent,
+            recipient: '(from notification history)'
+        }
+    });
+    window.dispatchEvent(event);
 };
 
 const NotificationsPage: React.FC<NotificationsPageProps> = ({ currentUser, setCurrentUser }) => {
@@ -44,7 +61,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ currentUser, setC
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
         <div>
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Notifications</h2>
-            <p className="text-slate-600 dark:text-slate-300 mt-1">A record of all updates to your reports.</p>
+            <p className="text-slate-600 dark:text-slate-300 mt-1">A record of all updates for your account.</p>
         </div>
         {unreadCount > 0 && (
           <button 
@@ -68,7 +85,20 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ currentUser, setC
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-slate-700 dark:text-slate-300">{notif.message}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{timeSince(notif.createdAt)}</p>
+                        <div className="flex items-center gap-6 mt-3">
+                           <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                               <i className="fa-solid fa-clock"></i> {timeSince(notif.createdAt)}
+                           </p>
+                           <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                               <i className={`fa-solid ${deliveryIcons[notif.deliveryMethod]}`}></i> 
+                               Delivered via {notif.deliveryMethod === 'email' ? 'Simulated Email' : 'In-App'}
+                           </p>
+                        </div>
+                         {notif.deliveryMethod === 'email' && (
+                            <button onClick={() => handleViewEmail(notif)} className="mt-3 text-xs font-bold text-blue-600 hover:text-blue-500">
+                                View Email &rarr;
+                            </button>
+                         )}
                       </div>
                        {!notif.read && (
                          <div className="mt-1 h-3 w-3 rounded-full flex-shrink-0 bg-blue-500 animate-pulse" title="Unread"></div>

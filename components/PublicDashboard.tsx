@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { CivicIssue, Status, Department } from '../types';
+import { CivicIssue, Status, Department, View, LeaderboardUser } from '../types';
 import { getIssues } from '../services/issueService';
+import { getLeaderboardData } from '../services/reportService';
 import MapVisualization from './MapVisualization';
 import { DEPARTMENTS } from '../constants';
+import BarChart from './BarChart';
+import Leaderboard from './Leaderboard';
 
-const PublicDashboard: React.FC = () => {
+interface PublicDashboardProps {
+  navigateTo: (view: View) => void;
+}
+
+const PublicDashboard: React.FC<PublicDashboardProps> = ({ navigateTo }) => {
   const [issues, setIssues] = useState<CivicIssue[]>([]);
 
   useEffect(() => {
@@ -60,26 +67,10 @@ const PublicDashboard: React.FC = () => {
     };
   }, [issues]);
 
-  const BarChart = ({ data, title, subtitle, unit = '' }: { data: { label: string, value: number, color: string }[], title: string, subtitle?: string, unit?: string }) => {
-    const maxValue = Math.max(...data.map(d => d.value), 1);
-    return (
-        <div className="p-4 sm:p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-            <h4 className="font-bold text-slate-700 dark:text-slate-200">{title}</h4>
-            {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{subtitle}</p>}
-            <div className="space-y-4 mt-4">
-                {data.map(item => (
-                    <div key={item.label} className="grid grid-cols-6 items-center gap-2 text-sm">
-                        <div className="col-span-2 sm:col-span-2 text-slate-600 dark:text-slate-400 truncate pr-2">{item.label}</div>
-                        <div className="col-span-3 sm:col-span-3 bg-slate-200 dark:bg-slate-700 rounded-full h-5">
-                            <div className={`${item.color} h-5 rounded-full transition-all duration-500`} style={{ width: `${(item.value / (unit === '/ 5' ? 5 : maxValue)) * 100}%` }}></div>
-                        </div>
-                        <div className="col-span-1 text-right font-semibold text-slate-800 dark:text-slate-100">{item.value.toFixed(1)}{unit}</div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    )
-  };
+  const topUsers = useMemo((): LeaderboardUser[] => {
+    return getLeaderboardData().slice(0, 5);
+  }, [issues]);
+
 
   const msToMinutes = (ms: number) => (ms > 0 ? (ms / (1000 * 60)) : 0);
 
@@ -120,13 +111,23 @@ const PublicDashboard: React.FC = () => {
           <BarChart 
             title="Customer Satisfaction"
             unit="/ 5"
+            maxValueOverride={5}
             data={stats.departmentStats.map(d => ({ label: d.department, value: d.avgSatisfaction, color: 'bg-teal-500' }))}
           />
       </div>
 
-      <div className="bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
-        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Map of All Resolved Issues</h3>
-        <MapVisualization issues={issues.filter(i => i.status === Status.Resolved)} />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3">
+              <Leaderboard topUsers={topUsers} />
+          </div>
+          <div className="lg:col-span-2">
+              <div className="bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-4 sm:p-6 h-full flex flex-col">
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Locations of Resolved Issues</h3>
+                  <div className="flex-grow">
+                      <MapVisualization issues={issues.filter(i => i.status === Status.Resolved)} />
+                  </div>
+              </div>
+          </div>
       </div>
     </div>
   );
