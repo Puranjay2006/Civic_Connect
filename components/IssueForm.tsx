@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { User, Category, CivicIssue } from '../types';
-import { ISSUE_CATEGORIES } from '../constants';
+import { User, Category, CivicIssue, Department } from '../types';
+import { ISSUE_CATEGORIES, DEPARTMENTS } from '../constants';
 import { addIssue } from '../services/issueService';
+import CustomSelect from './CustomSelect';
 
 interface IssueFormProps {
   currentUser: User;
@@ -12,6 +13,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>(Category.Other);
+  const [department, setDepartment] = useState<Department>(DEPARTMENTS[0]);
   const [photo, setPhoto] = useState<string | null>(null);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,14 +78,14 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description || !category || !photo || !location) {
-      setError("Please fill in all fields, upload a photo, and provide your location.");
+    if (!title || !description || !category || !photo || !location || !department) {
+      setError("Please fill in all fields, select a department, upload a photo, and provide your location.");
       return;
     }
     setIsLoading(true);
     setError(null);
     try {
-      const newIssueData = { title, description, category, photo, location };
+      const newIssueData = { title, description, category, photo, location, department };
       const newIssue = addIssue(newIssueData, currentUser);
       onIssueReported(newIssue);
     } catch (err) {
@@ -110,11 +112,23 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) =
             <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
             <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Provide more details about the issue." required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:border-slate-600 transition" />
           </div>
+           <div>
+            <label htmlFor="department" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
+            <CustomSelect
+              id="department"
+              value={department}
+              onChange={(value) => setDepartment(value as Department)}
+              options={DEPARTMENTS.map(dep => ({ value: dep, label: dep }))}
+            />
+          </div>
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
-            <select id="category" value={category} onChange={(e) => setCategory(e.target.value as Category)} required className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:border-slate-600 transition">
-              {ISSUE_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-            </select>
+            <CustomSelect
+              id="category"
+              value={category}
+              onChange={(value) => setCategory(value as Category)}
+              options={ISSUE_CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+            />
           </div>
           <div>
             <label htmlFor="photo" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Upload Photo</label>

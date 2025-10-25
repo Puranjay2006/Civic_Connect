@@ -1,8 +1,17 @@
-import { User, NotificationMessage } from '../types';
+import { User, NotificationMessage, Department, NotificationType } from '../types';
 
 const USERS_KEY = 'civic-users';
 const SESSION_KEY = 'civic-session';
-const ADMIN_PASSKEY = 'ykls_764'; // Developer-provided passkey
+const ADMIN_PASSKEY = 'ykls_764'; // Super Admin
+
+// Department Admin Passkeys
+const DEPARTMENT_PASSKEYS: { [key in Department]?: string } = {
+    [Department.Electrical]: 'elec_123',
+    [Department.Water]: 'water_456',
+    [Department.Medical]: 'med_789',
+    [Department.Sanitation]: 'sani_101',
+    [Department.Roads]: 'roads_112',
+};
 
 // Helper to get users from localStorage
 const getUsers = (): User[] => {
@@ -20,7 +29,7 @@ const pseudoHash = (password: string): string => {
   return `hashed_${password}_salted`;
 };
 
-export const signUp = (username: string, email: string, password: string): User | null => {
+export const signUp = (username: string, email: string, password: string, department?: Department): User | null => {
   const users = getUsers();
   
   // Username validation
@@ -43,8 +52,9 @@ export const signUp = (username: string, email: string, password: string): User 
     username: username,
     email: email.toLowerCase(),
     passwordHash: pseudoHash(password),
-    isAdmin: email.toLowerCase() === 'admin@city.gov', // Hardcoded admin user
+    isAdmin: email.toLowerCase().includes('@city.gov'), // Make all city.gov admins
     notifications: [],
+    department: department,
   };
 
   saveUsers([...users, newUser]);
@@ -68,24 +78,38 @@ export const login = (identifier: string, password: string): User | null => {
 };
 
 export const loginWithPasskey = (passkey: string): User | null => {
-    if (passkey !== ADMIN_PASSKEY) {
-        throw new Error('Invalid Admin Passkey.');
+    const users = getUsers();
+    
+    // Super Admin
+    if (passkey === ADMIN_PASSKEY) {
+        let adminUser = users.find(u => u.email.toLowerCase() === 'admin@city.gov');
+        if (!adminUser) {
+            console.log("Super admin user not found, creating one.");
+            adminUser = signUp('admin', 'admin@city.gov', 'default_admin_password_placeholder');
+            if (!adminUser) throw new Error('Could not create super admin user.');
+        }
+        localStorage.setItem(SESSION_KEY, JSON.stringify(adminUser));
+        return adminUser;
     }
 
-    const users = getUsers();
-    let adminUser = users.find(u => u.email.toLowerCase() === 'admin@city.gov');
+    // Department Admin
+    for (const dept in DEPARTMENT_PASSKEYS) {
+        if (DEPARTMENT_PASSKEYS[dept as Department] === passkey) {
+            const department = dept as Department;
+            const deptEmail = `${department.toLowerCase()}@city.gov`;
+            let deptAdmin = users.find(u => u.email.toLowerCase() === deptEmail);
 
-    // Create admin if it doesn't exist on first passkey login
-    if (!adminUser) {
-        console.log("Admin user not found, creating one with a default password.");
-        adminUser = signUp('admin', 'admin@city.gov', 'default_admin_password_placeholder');
-        if (!adminUser) {
-             throw new Error('Could not create admin user.');
+            if (!deptAdmin) {
+                console.log(`Department admin for ${department} not found, creating one.`);
+                deptAdmin = signUp(department, deptEmail, 'default_dept_password', department);
+                if (!deptAdmin) throw new Error(`Could not create admin for ${department}.`);
+            }
+            localStorage.setItem(SESSION_KEY, JSON.stringify(deptAdmin));
+            return deptAdmin;
         }
     }
 
-    localStorage.setItem(SESSION_KEY, JSON.stringify(adminUser));
-    return adminUser;
+    throw new Error('Invalid Admin Passkey.');
 }
 
 export const logout = (): void => {
@@ -135,7 +159,7 @@ export const resetPassword = (token: string, newPassword: string): void => {
 };
 
 
-export const addNotification = (userId: string, message: string): void => {
+export const addNotification = (userId: string, message: string, type: NotificationType): void => {
     const users = getUsers();
     const userIndex = users.findIndex(u => u.id === userId);
     if (userIndex === -1) return;
@@ -145,6 +169,7 @@ export const addNotification = (userId: string, message: string): void => {
         message,
         read: false,
         createdAt: Date.now(),
+        type,
     };
     
     users[userIndex].notifications.unshift(newNotification);
@@ -174,3 +199,9 @@ export const markNotificationsAsRead = (userId: string): User | null => {
     }
     return null;
 };
+
+export const findAdminByDepartment = (department: Department): User | null => {
+    const users = getUsers();
+    const deptEmail = `${department.toLowerCase()}@city.gov`;
+    return users.find(u => u.isAdmin && u.email.toLowerCase() === deptEmail) || null;
+}

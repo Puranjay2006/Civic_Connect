@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { CivicIssue, Status, Category } from '../types';
+import { CivicIssue, Status, Category, User, Department } from '../types';
 import { getIssues, updateIssueStatus } from '../services/issueService';
 import { ISSUE_CATEGORIES, STATUSES } from '../constants';
 import IssueCard from './IssueCard';
 import Notification from './Notification';
+import CustomSelect from './CustomSelect';
 
-const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  currentUser: User;
+  selectedDepartment: Department | null;
+}
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDepartment }) => {
   const [issues, setIssues] = useState<CivicIssue[]>([]);
   const [filteredIssues, setFilteredIssues] = useState<CivicIssue[]>([]);
   const [filters, setFilters] = useState<{ status: Status | 'all'; category: Category | 'all' }>({
@@ -15,17 +21,28 @@ const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [notification, setNotification] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadIssues();
-  }, []);
-
   const loadIssues = () => {
     const allIssues = getIssues().sort((a, b) => b.createdAt - a.createdAt);
     setIssues(allIssues);
   };
+  
+  useEffect(() => {
+    loadIssues();
+  }, []);
+
+  const departmentIssues = useMemo(() => {
+    // Super admin uses session department, dept admin uses their own assigned dept
+    const departmentToFilter = currentUser.department || selectedDepartment;
+    if (departmentToFilter) {
+        return issues.filter(issue => issue.department === departmentToFilter);
+    }
+    // Super admin before selecting a department (shows all)
+    return issues;
+  }, [issues, currentUser, selectedDepartment]);
+
 
   useEffect(() => {
-    let tempIssues = [...issues];
+    let tempIssues = [...departmentIssues];
     
     if (filters.status !== 'all') {
       tempIssues = tempIssues.filter(issue => issue.status === filters.status);
@@ -44,7 +61,7 @@ const AdminDashboard: React.FC = () => {
     }
 
     setFilteredIssues(tempIssues);
-  }, [issues, filters, searchQuery]);
+  }, [departmentIssues, filters, searchQuery]);
 
   const handleStatusChange = (id: string, status: Status) => {
     const updatedIssue = updateIssueStatus(id, status);
@@ -53,21 +70,22 @@ const AdminDashboard: React.FC = () => {
       setNotification(`Status for issue #${id.slice(-6)} updated to ${status}.`);
     }
   };
-
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
   
   const stats = useMemo(() => {
-    return issues.reduce((acc, issue) => {
+    return departmentIssues.reduce((acc, issue) => {
       acc.total++;
       if (issue.status === Status.Resolved) acc.resolved++;
       if (issue.status === Status.InProgress) acc.inProgress++;
       if (issue.status === Status.Pending) acc.pending++;
       return acc;
     }, { total: 0, resolved: 0, inProgress: 0, pending: 0 });
-  }, [issues]);
+  }, [departmentIssues]);
+
+  const dashboardTitle = currentUser.department 
+    ? `${currentUser.department} Department` 
+    : selectedDepartment 
+    ? `${selectedDepartment} Department (Admin View)`
+    : 'Manage All Reported Issues';
 
   const StatCard: React.FC<{ title: string; value: number; icon: string; color: string }> = ({ title, value, icon, color }) => (
     <div className={`bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-5`}>
@@ -85,7 +103,9 @@ const AdminDashboard: React.FC = () => {
     <div className="space-y-10">
       {notification && <Notification message={notification} onClose={() => setNotification(null)} type="success" />}
       <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Manage and track all reported civic issues.</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+          {dashboardTitle}
+        </h2>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -109,20 +129,28 @@ const AdminDashboard: React.FC = () => {
                 />
             </div>
             <div className="flex w-full md:w-auto gap-4">
-                 <select id="status-filter" name="status" value={filters.status} onChange={handleFilterChange} className="w-full md:w-48 pl-3 pr-10 py-2 text-base border-slate-300 bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-lg">
-                  <option value="all">All Statuses</option>
-                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <select id="category-filter" name="category" value={filters.category} onChange={handleFilterChange} className="w-full md:w-48 pl-3 pr-10 py-2 text-base border-slate-300 bg-white dark:bg-slate-700 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-lg">
-                  <option value="all">All Categories</option>
-                  {ISSUE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                 <div className="w-full md:w-48">
+                    <CustomSelect
+                      id="status-filter"
+                      value={filters.status}
+                      onChange={(value) => setFilters(prev => ({...prev, status: value as Status | 'all'}))}
+                      options={[{ value: 'all', label: 'All Statuses' }, ...STATUSES.map(s => ({ value: s, label: s }))]}
+                    />
+                 </div>
+                 <div className="w-full md:w-48">
+                    <CustomSelect
+                      id="category-filter"
+                      value={filters.category}
+                      onChange={(value) => setFilters(prev => ({...prev, category: value as Category | 'all'}))}
+                      options={[{ value: 'all', label: 'All Categories' }, ...ISSUE_CATEGORIES.map(c => ({ value: c, label: c }))]}
+                    />
+                 </div>
             </div>
         </div>
       </div>
       
       <div>
-        <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">All Reports ({filteredIssues.length})</h3>
+        <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Reports ({filteredIssues.length})</h3>
         {filteredIssues.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredIssues.map(issue => (

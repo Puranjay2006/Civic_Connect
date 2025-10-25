@@ -1,5 +1,5 @@
 {
-  "name": "Improve My City",
+  "name": "Civic Connect",
   "description": "A web application that allows citizens to report, track, and view resolutions of civic issues in their neighborhood. It features a public dashboard, an admin panel for managing issues, and a Gemini-powered chatbot for status updates.",
   "requestFramePermissions": [
     "geolocation"

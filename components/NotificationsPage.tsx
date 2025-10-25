@@ -1,5 +1,5 @@
 import React from 'react';
-import { User } from '../types';
+import { User, NotificationType } from '../types';
 import { markNotificationsAsRead } from '../services/authService';
 
 interface NotificationsPageProps {
@@ -20,7 +20,14 @@ const timeSince = (date: number): string => {
   interval = seconds / 60;
   if (interval > 1) return Math.floor(interval) + " minutes ago";
   return Math.floor(seconds) + " seconds ago";
-}
+};
+
+const notificationIcons: { [key in NotificationType]: { icon: string; color: string; } } = {
+  [NotificationType.StatusUpdate]: { icon: 'fa-arrows-rotate', color: 'text-blue-500' },
+  [NotificationType.RatingReceived]: { icon: 'fa-star', color: 'text-yellow-500' },
+  [NotificationType.FeedbackReceived]: { icon: 'fa-comment-dots', color: 'text-purple-500' },
+  [NotificationType.General]: { icon: 'fa-bell', color: 'text-slate-500' },
+};
 
 const NotificationsPage: React.FC<NotificationsPageProps> = ({ currentUser, setCurrentUser }) => {
   const handleMarkAsRead = () => {
@@ -51,17 +58,25 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ currentUser, setC
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
         {currentUser.notifications.length > 0 ? (
           <ul className="divide-y divide-slate-200 dark:divide-slate-700">
-            {currentUser.notifications.map(notif => (
-              <li key={notif.id} className={`p-4 sm:p-6 transition-colors ${!notif.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                <div className="flex items-start gap-4">
-                  <div className={`mt-1 h-3 w-3 rounded-full flex-shrink-0 ${!notif.read ? 'bg-blue-500 animate-pulse' : 'bg-transparent'}`}></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-700 dark:text-slate-300">{notif.message}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{timeSince(notif.createdAt)}</p>
-                  </div>
-                </div>
-              </li>
-            ))}
+            {currentUser.notifications.map(notif => {
+                const iconInfo = notificationIcons[notif.type] || notificationIcons.General;
+                return (
+                  <li key={notif.id} className={`p-4 sm:p-6 transition-colors ${!notif.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                    <div className="flex items-start gap-4">
+                      <div className={`mt-1 h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center bg-slate-100 dark:bg-slate-700/50`}>
+                        <i className={`fa-solid ${iconInfo.icon} ${iconInfo.color}`}></i>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-slate-700 dark:text-slate-300">{notif.message}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{timeSince(notif.createdAt)}</p>
+                      </div>
+                       {!notif.read && (
+                         <div className="mt-1 h-3 w-3 rounded-full flex-shrink-0 bg-blue-500 animate-pulse" title="Unread"></div>
+                       )}
+                    </div>
+                  </li>
+                )
+            })}
           </ul>
         ) : (
            <div className="text-center py-16">

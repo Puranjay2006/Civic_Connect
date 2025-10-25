@@ -4,6 +4,14 @@ export enum Status {
   Resolved = 'Resolved',
 }
 
+export enum Department {
+  Electrical = 'Electrical',
+  Water = 'Water',
+  Medical = 'Medical',
+  Sanitation = 'Sanitation',
+  Roads = 'Roads',
+}
+
 export enum Category {
   Pothole = 'Pothole',
   Garbage = 'Garbage',
@@ -11,11 +19,19 @@ export enum Category {
   Other = 'Other',
 }
 
+export enum NotificationType {
+  StatusUpdate = 'StatusUpdate',
+  RatingReceived = 'RatingReceived',
+  FeedbackReceived = 'FeedbackReceived',
+  General = 'General',
+}
+
 export interface NotificationMessage {
   id: string;
   message: string;
   read: boolean;
   createdAt: number;
+  type: NotificationType;
 }
 
 export interface User {
@@ -27,6 +43,7 @@ export interface User {
   notifications: NotificationMessage[];
   passwordResetToken?: string;
   passwordResetExpires?: number;
+  department?: Department;
 }
 
 export interface CivicIssue {
@@ -34,6 +51,7 @@ export interface CivicIssue {
   title: string;
   description: string;
   category: Category;
+  department: Department;
   photo: string; // base64 data URL
   location: {
     lat: number;
@@ -41,9 +59,13 @@ export interface CivicIssue {
   };
   status: Status;
   createdAt: number; // timestamp
+  acknowledgedAt: number | null;
+  resolvedAt: number | null;
   userId: string;
   userEmail: string;
   username?: string;
+  rating: number | null; // 1-5 stars
+  feedback?: string;
 }
 
-export type View = 'home' | 'dashboard' | 'report' | 'admin' | 'track' | 'login' | 'signup' | 'notifications' | 'my-reports' | 'admin-login' | 'forgot-password' | 'reset-password';
+export type View = 'home' | 'dashboard' | 'report' | 'admin' | 'track' | 'login' | 'signup' | 'notifications' | 'my-reports' | 'admin-login' | 'forgot-password' | 'reset-password' | 'admin-department-select' | 'feedback';
