@@ -8,7 +8,7 @@
 
 View the web app in AI Studio: [https://ai.studio/apps/drive/1xgRTmexuUUBg38e9HHEpHiupx_lvUmV3](https://ai.studio/apps/drive/1xgRTmexuUUBg38e9HHEpHiupx_lvUmV3)
 
-Deployment Link: [https://ai.studio/apps/drive/1xgRTmexuUUBg38e9HHEpHiupx_lvUmV3](https://civic-connect-862542138631.us-west1.run.app/#)
+Deployment Link: [https://civic-connect-862542138631.us-west1.run.app](https://civic-connect-862542138631.us-west1.run.app)
 
 Find the Passkeys for the Department Admin and Super Admin here: [https://drive.google.com/file/d/1aNsTMCX-U0iK4aD-V8p2aB2XHDcJXGT4/view?usp=sharing](https://drive.google.com/file/d/1aNsTMCX-U0iK4aD-V8p2aB2XHDcJXGT4/view?usp=sharing)
 
