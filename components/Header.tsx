@@ -32,10 +32,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
         navigateTo(view);
         setIsMenuOpen(false);
       }}
-      className={`px-4 py-2 rounded-lg text-base font-medium transition-all duration-300 transform border-2 ${
+      className={`px-5 py-2 rounded-full text-base font-medium transition-colors duration-300 ${
         currentView === view
-          ? 'bg-blue-600 text-white shadow-md border-blue-600'
-          : 'border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600'
+          ? 'bg-white text-blue-600 shadow'
+          : 'text-white hover:bg-white/25'
       }`}
     >
       {children}
@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
               <span>Civic Connect</span>
             </button>
           </div>
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-1 bg-gradient-to-r from-blue-600 to-indigo-700 p-1 rounded-full shadow-lg">
             {currentUser ? (
               <>
                 {currentUser.isAdmin ? (
@@ -64,7 +64,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
                     {currentUser.isAdmin && !currentUser.department && (
                       <button
                           onClick={() => navigateTo('admin-department-select')}
-                          className="px-4 py-2 rounded-lg text-base font-medium transition-all duration-300 transform border-2 border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600 flex items-center gap-2"
+                          className="px-5 py-2 rounded-full text-base font-medium transition-colors duration-300 text-white hover:bg-white/25 flex items-center gap-2"
                       >
                           {selectedDepartment ? (
                             <>
@@ -85,9 +85,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
                             onLogout();
                             navigateTo('department-login');
                           }}
-                          className="group bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-bold py-2 px-4 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all transform hover:scale-105 hover:shadow-lg text-base flex items-center justify-center gap-2"
+                          className="group px-5 py-2 rounded-full text-base font-medium transition-colors duration-300 text-white hover:bg-white/25 flex items-center justify-center gap-2"
                       >
-                          <i className="fa-solid fa-right-left group-hover:rotate-12 transition-transform"></i>
+                          <i className="fa-solid fa-right-left transition-transform"></i>
                           <span>Change Dept</span>
                       </button>
                     )}
@@ -99,10 +99,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
                     <div className="relative" ref={issuesMenuRef}>
                         <button
                             onClick={() => setIsIssuesMenuOpen(!isIssuesMenuOpen)}
-                            className={`px-4 py-2 rounded-lg text-base font-medium transition-all duration-300 transform border-2 flex items-center gap-2 ${
+                            className={`px-5 py-2 rounded-full text-base font-medium transition-colors duration-300 flex items-center gap-2 ${
                                 ['report', 'my-reports', 'track'].includes(currentView)
-                                ? 'bg-blue-600 text-white shadow-md border-blue-600'
-                                : 'border-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-600'
+                                ? 'bg-white text-blue-600 shadow'
+                                : 'text-white hover:bg-white/25'
                             }`}
                         >
                             Issues and Reports
