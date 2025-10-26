@@ -66,7 +66,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ currentUser, setC
         {unreadCount > 0 && (
           <button 
             onClick={handleMarkAsRead}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:shadow-blue-500/30"
           >
             Mark all as read
           </button>

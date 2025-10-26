@@ -91,7 +91,7 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo, setCur
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-400 disabled:cursor-not-allowed disabled:opacity-70 disabled:scale-100 disabled:shadow-none transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:shadow-blue-500/30"
           >
             {isLoading ? <><i className="fa-solid fa-spinner animate-spin mr-2"></i>Submitting...</> : 'Submit Feedback'}
           </button>
