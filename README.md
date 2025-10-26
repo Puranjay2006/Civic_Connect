@@ -6,7 +6,7 @@
 
 **Civic Connect** is an innovative, serverless web application designed to empower citizens by providing a direct line to their local government. Users can report, track, and view resolutions for civic issues in their neighborhood, fostering transparency and community engagement. The platform features a public dashboard, a comprehensive admin panel for city officials, and is supercharged with the Google Gemini API for intelligent features like department suggestions, issue summaries, and a helpful chatbot.
 
-View your app in AI Studio: [https://ai.studio/apps/drive/1xgRTmexuUUBg38e9HHEpHiupx_lvUmV3](https://ai.studio/apps/drive/1xgRTmexuUUBg38e9HHEpHiupx_lvUmV3)
+View the web app in AI Studio: [https://ai.studio/apps/drive/1xgRTmexuUUBg38e9HHEpHiupx_lvUmV3](https://ai.studio/apps/drive/1xgRTmexuUUBg38e9HHEpHiupx_lvUmV3)
 
 Deployment Link: [https://ai.studio/apps/drive/1xgRTmexuUUBg38e9HHEpHiupx_lvUmV3](https://civic-connect-862542138631.us-west1.run.app/#)
 
