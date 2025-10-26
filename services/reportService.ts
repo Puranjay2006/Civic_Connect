@@ -85,7 +85,7 @@ export const generateDepartmentReport = (department: Department): DepartmentRepo
     const avgResolutionTimeMs = resolvedRequests > 0 ? totalResolutionTime / resolvedRequests : 0;
 
     const slaCompliantCount = resolvedIssues.filter(i => (i.resolvedAt! - i.createdAt) <= SLA_TARGET_MS).length;
-    const slaComplianceRate = resolvedRequests > 0 ? (slaCompliantCount / resolvedRequests) * 100 : 100;
+    const slaComplianceRate = resolvedRequests > 0 ? (slaCompliantCount / resolvedRequests) * 100 : 0;
 
     const ratedIssues = deptIssues.filter(i => i.rating !== null && i.rating > 0);
     const totalRating = ratedIssues.reduce((acc, issue) => acc + issue.rating!, 0);

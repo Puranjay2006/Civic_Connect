@@ -1,22 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, CivicIssue, User } from '../types';
+import { View, CivicIssue } from '../types';
 import { getIssueById, addFeedbackToIssue } from '../services/issueService';
 import Notification from './Notification';
 
 interface FeedbackPageProps {
   issueId: string;
   navigateTo: (view: View) => void;
-  setCurrentUser: (user: User) => void;
 }
 
-const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo, setCurrentUser }) => {
+const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo }) => {
   const [issue, setIssue] = useState<CivicIssue | null>(null);
   const [feedback, setFeedback] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notification, setNotification] = useState<string | null>(null);
-
+  
   useEffect(() => {
     const foundIssue = getIssueById(issueId);
     if (foundIssue) {
@@ -37,14 +35,11 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo, setCur
     setError(null);
     
     try {
-        const { updatedUser } = addFeedbackToIssue(issueId, feedback);
-        if (updatedUser) {
-            setCurrentUser(updatedUser);
-        }
-        setNotification("Your feedback has been submitted successfully!");
+        addFeedbackToIssue(issueId, feedback);
+        // A global notification will appear. After it's visible for a moment, navigate away.
         setTimeout(() => {
             navigateTo('my-reports');
-        }, 2000);
+        }, 1500);
     } catch(err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
         setIsLoading(false);
@@ -62,7 +57,6 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo, setCur
 
   return (
     <div className="max-w-2xl mx-auto">
-      {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Provide Detailed Feedback</h2>
         <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">

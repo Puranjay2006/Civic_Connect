@@ -49,7 +49,7 @@ const DepartmentReportView: React.FC<DepartmentReportViewProps> = ({ report, dep
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">{departmentName} Department</h2>
         <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">Performance and Efficiency Report</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Total Requests" value={report.totalRequests} icon="fa-bullhorn" color="bg-blue-500" />
         <StatCard title="Resolved" value={report.resolvedRequests} icon="fa-check-circle" color="bg-green-500" />
         <StatCard title="Pending / In Progress" value={report.pendingRequests + report.inProgressRequests} icon="fa-hourglass-half" color="bg-yellow-500" />
@@ -61,7 +61,7 @@ const DepartmentReportView: React.FC<DepartmentReportViewProps> = ({ report, dep
           tooltipText="An issue is marked as overdue if it remains 'Pending' or 'In Progress' for more than 3 hours after being reported (for demo purposes)."
         />
       </div>
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           <StatCard 
             title="Avg Resolution" 
             value={msToMinutes(report.avgResolutionTimeMs).toFixed(1)} 
@@ -80,8 +80,8 @@ const DepartmentReportView: React.FC<DepartmentReportViewProps> = ({ report, dep
           <StatCard title="Avg Satisfaction" value={`${report.avgSatisfaction.toFixed(2)} / 5`} icon="fa-star" color="bg-teal-500" />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
              <LineChart 
                 title="Avg. Resolution Time Trend (Last Week)"
                 subtitle="Note: Time shown in minutes for demo purposes."
@@ -89,7 +89,7 @@ const DepartmentReportView: React.FC<DepartmentReportViewProps> = ({ report, dep
                 unit=" mins"
             />
         </div>
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-1 space-y-6">
             <PieChart 
                 title="Issue Type Distribution"
                 data={pieChartData}

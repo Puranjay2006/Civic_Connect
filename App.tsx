@@ -187,7 +187,7 @@ const App: React.FC = () => {
       case 'dashboard':
         return <PublicDashboard navigateTo={navigateTo} />;
       case 'report':
-        return currentUser ? <IssueForm currentUser={currentUser} onIssueReported={() => setNavigation([{ view: 'my-reports' }])} setCurrentUser={setCurrentUser} /> : <Login onLogin={handleLogin} navigateTo={navigateTo} />;
+        return currentUser ? <IssueForm currentUser={currentUser} onIssueReported={() => setNavigation([{ view: 'my-reports' }])} /> : <Login onLogin={handleLogin} navigateTo={navigateTo} />;
       case 'admin':
         return currentUser?.isAdmin ? <AdminDashboard currentUser={currentUser} selectedDepartment={sessionDepartment} navigateTo={navigateTo} /> : <Home navigateTo={navigateTo} currentUser={currentUser} onLogout={handleLogout} />;
       case 'admin-department-select':
@@ -207,13 +207,13 @@ const App: React.FC = () => {
       case 'notifications':
         return currentUser ? <NotificationsPage currentUser={currentUser} setCurrentUser={setCurrentUser} /> : <Login onLogin={handleLogin} navigateTo={navigateTo} />;
       case 'my-reports':
-          return currentUser ? <MyReports currentUser={currentUser} navigateTo={navigateTo} setCurrentUser={setCurrentUser} /> : <Login onLogin={handleLogin} navigateTo={navigateTo} />;
+          return currentUser ? <MyReports currentUser={currentUser} navigateTo={navigateTo} /> : <Login onLogin={handleLogin} navigateTo={navigateTo} />;
       case 'forgot-password':
           return <ForgotPassword navigateTo={navigateTo} />;
       case 'reset-password':
           return currentNavItem.token ? <ResetPassword token={currentNavItem.token} navigateTo={navigateTo} /> : <Login onLogin={handleLogin} navigateTo={navigateTo} />;
       case 'feedback':
-          return currentNavItem.issueId && currentUser ? <FeedbackPage issueId={currentNavItem.issueId} navigateTo={navigateTo} setCurrentUser={setCurrentUser} /> : <MyReports currentUser={currentUser} navigateTo={navigateTo} setCurrentUser={setCurrentUser} />;
+          return currentNavItem.issueId && currentUser ? <FeedbackPage issueId={currentNavItem.issueId} navigateTo={navigateTo} /> : <MyReports currentUser={currentUser} navigateTo={navigateTo} />;
       case 'reports':
           return currentUser?.isAdmin ? <Reports currentUser={currentUser} selectedDepartment={sessionDepartment} /> : <Home navigateTo={navigateTo} currentUser={currentUser} onLogout={handleLogout} />;
       case 'public-reports':
@@ -234,12 +234,15 @@ const App: React.FC = () => {
                 {...simulatedEmail} 
                 onCtaClick={(link) => {
                     if (link.startsWith('#')) {
-                        const view = link.substring(1) as View;
-                        if(view === 'reset-password') {
-                            // special handling for reset password link with token
-                             const token = simulatedEmail.cta?.link.split('/')[1];
-                             navigateTo(view, { token });
+                        const path = link.substring(1); // e.g., "reset-password/some-token" or "my-reports"
+                        const pathParts = path.split('/');
+                        const view = pathParts[0] as View;
+
+                        if (view === 'reset-password' && pathParts.length > 1) {
+                            const token = pathParts[1];
+                            navigateTo(view, { token });
                         } else {
+                            // Handles simple navigation links like #my-reports
                             navigateTo(view);
                         }
                     }

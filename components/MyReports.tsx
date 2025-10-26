@@ -2,17 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { CivicIssue, User, View } from '../types';
 import { getIssues, addRatingToIssue } from '../services/issueService';
 import IssueCard from './IssueCard';
-import Notification from './Notification';
 
 interface MyReportsProps {
   currentUser: User;
   navigateTo: (view: View, options?: { issueId?: string }) => void;
-  setCurrentUser: (user: User) => void;
 }
 
-const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo, setCurrentUser }) => {
+const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo }) => {
   const [myIssues, setMyIssues] = useState<CivicIssue[]>([]);
-  const [notification, setNotification] = useState<string | null>(null);
 
   const loadMyIssues = () => {
     const allIssues = getIssues();
@@ -24,15 +21,12 @@ const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo, setCurre
 
   useEffect(() => {
     loadMyIssues();
-  }, [currentUser.id]);
+  }, [currentUser]);
 
   const handleRateIssue = (id: string, rating: number) => {
-    const { updatedUser } = addRatingToIssue(id, rating);
-    setNotification("Thank you for your feedback!");
-    if (updatedUser) {
-        setCurrentUser(updatedUser);
-    }
-    loadMyIssues(); // Refresh the list to show the new rating
+    addRatingToIssue(id, rating);
+    // The global toast notification will be shown via the event system.
+    // We listen to currentUser changes to refresh the issue list, which will now show the rating.
   };
 
   const handleProvideFeedback = (issueId: string) => {
@@ -41,7 +35,6 @@ const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo, setCurre
 
   return (
     <div className="space-y-10">
-      {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">My Reported Issues</h2>
         <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">Here's a list of all the civic issues you've submitted.</p>

@@ -8,7 +8,6 @@ import { geocodeLocation, suggestDepartment } from '../services/geminiService';
 interface IssueFormProps {
   currentUser: User;
   onIssueReported: (issue: CivicIssue) => void;
-  setCurrentUser: (user: User) => void;
 }
 
 // Debounce helper function to delay API calls
@@ -25,7 +24,7 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported, setCurrentUser }) => {
+const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>(Category.Other);
@@ -147,10 +146,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported, set
     setError(null);
     try {
       const newIssueData = { title, description, category, photo, location, department };
-      const { newIssue, updatedUser } = addIssue(newIssueData, currentUser);
-      if (updatedUser) {
-        setCurrentUser(updatedUser);
-      }
+      const { newIssue } = addIssue(newIssueData, currentUser);
       onIssueReported(newIssue);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');

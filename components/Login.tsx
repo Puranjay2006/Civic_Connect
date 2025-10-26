@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { login } from '../services/authService';
 import { User, View } from '../types';
 import AuthLayout from './AuthLayout';
@@ -15,6 +15,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, navigateTo, message }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState<string | undefined>();
+
+  useEffect(() => {
+    // Use an effect to set the notification message. This allows us to clear it
+    // internally without affecting the parent's navigation state.
+    setNotificationMessage(message);
+  }, [message]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +41,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, navigateTo, message }) => {
 
   return (
     <AuthLayout title="Sign in to your account">
-      {message && <Notification message={message} onClose={() => {}} type="success" />}
+      {notificationMessage && <Notification message={notificationMessage} onClose={() => setNotificationMessage(undefined)} type="success" />}
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
             <div className="bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg relative" role="alert">

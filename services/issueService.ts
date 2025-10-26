@@ -21,7 +21,7 @@ export const getIssueById = (id: string): CivicIssue | undefined => {
 };
 
 // Add a new issue
-export const addIssue = (issueData: Omit<CivicIssue, 'id' | 'createdAt' | 'status' | 'userId' | 'userEmail' | 'username' | 'acknowledgedAt' | 'resolvedAt' | 'rating'>, user: User): { newIssue: CivicIssue, updatedUser: User | null } => {
+export const addIssue = (issueData: Omit<CivicIssue, 'id' | 'createdAt' | 'status' | 'userId' | 'userEmail' | 'username' | 'acknowledgedAt' | 'resolvedAt' | 'rating'>, user: User): { newIssue: CivicIssue } => {
   const issues = getIssues();
   const newIssue: CivicIssue = {
     ...issueData,
@@ -40,7 +40,7 @@ export const addIssue = (issueData: Omit<CivicIssue, 'id' | 'createdAt' | 'statu
   saveIssues(updatedIssues);
   
   // Notify the user who created the issue
-  const updatedUser = addNotification(user.id, `Your issue report "${newIssue.title}" has been successfully submitted.`, NotificationType.General);
+  addNotification(user.id, `Your issue report "${newIssue.title}" has been successfully submitted.`, NotificationType.General);
   
   // Notify the department admin via a simulated email
   const admin = findAdminByDepartment(newIssue.department);
@@ -52,22 +52,22 @@ export const addIssue = (issueData: Omit<CivicIssue, 'id' | 'createdAt' | 'statu
       addNotification(admin.id, `New issue "${newIssue.title}" for your department.`, NotificationType.Email, 'email', emailContent);
   }
 
-  return { newIssue, updatedUser };
+  return { newIssue };
 };
 
 // Update the status of an existing issue
-export const updateIssueStatus = (id: string, newStatus: Status, adminUser: User): { updatedIssue: CivicIssue | null; updatedUser: User | null; } => {
+export const updateIssueStatus = (id: string, newStatus: Status, adminUser: User): { updatedIssue: CivicIssue | null; } => {
   const issues = getIssues();
   const issueIndex = issues.findIndex(issue => issue.id === id);
 
   if (issueIndex === -1) {
     console.error(`Issue with id ${id} not found.`);
-    return { updatedIssue: null, updatedUser: null };
+    return { updatedIssue: null };
   }
 
   const originalStatus = issues[issueIndex].status;
   if (originalStatus === newStatus) {
-    return { updatedIssue: issues[issueIndex], updatedUser: null }; // No change
+    return { updatedIssue: issues[issueIndex] }; // No change
   }
 
   const updatedIssue = { ...issues[issueIndex], status: newStatus };
@@ -96,21 +96,21 @@ export const updateIssueStatus = (id: string, newStatus: Status, adminUser: User
           body: `Hello ${updatedIssue.username},\n\nWe're pleased to inform you that your reported issue, "${updatedIssue.title}", has been marked as resolved by the ${updatedIssue.department} department.\n\nThank you for helping improve our community. We would appreciate it if you could take a moment to rate the service you received.`,
           cta: { text: "Rate Service & View Report", link: `#my-reports` }
       };
-      const updatedUser = addNotification(updatedIssue.userId, `Your report "${updatedIssue.title}" has been resolved.`, NotificationType.Email, 'email', emailContent);
-      return { updatedIssue, updatedUser };
+      addNotification(updatedIssue.userId, `Your report "${updatedIssue.title}" has been resolved.`, NotificationType.Email, 'email', emailContent);
+      return { updatedIssue };
   } else {
-      const updatedUser = addNotification(updatedIssue.userId, `The status of your report "${updatedIssue.title}" has been updated to "${newStatus}".`, NotificationType.StatusUpdate);
-      return { updatedIssue, updatedUser };
+      addNotification(updatedIssue.userId, `The status of your report "${updatedIssue.title}" has been updated to "${newStatus}".`, NotificationType.StatusUpdate);
+      return { updatedIssue };
   }
 };
 
-export const addRatingToIssue = (id: string, rating: number): { updatedIssue: CivicIssue | null; updatedUser: User | null; } => {
+export const addRatingToIssue = (id: string, rating: number): { updatedIssue: CivicIssue | null; } => {
     const issues = getIssues();
     const issueIndex = issues.findIndex(issue => issue.id === id);
 
     if (issueIndex === -1) {
         console.error(`Issue with id ${id} not found.`);
-        return { updatedIssue: null, updatedUser: null };
+        return { updatedIssue: null };
     }
 
     const updatedIssue = { ...issues[issueIndex], rating };
@@ -118,7 +118,7 @@ export const addRatingToIssue = (id: string, rating: number): { updatedIssue: Ci
     saveIssues(issues);
 
     // Notify user
-    const updatedUser = addNotification(updatedIssue.userId, `Your ${rating}-star rating for "${updatedIssue.title}" has been recorded. Thank you!`, NotificationType.General);
+    addNotification(updatedIssue.userId, `Your ${rating}-star rating for "${updatedIssue.title}" has been recorded. Thank you!`, NotificationType.General);
 
     // Notify department admin
     const admin = findAdminByDepartment(updatedIssue.department);
@@ -126,16 +126,16 @@ export const addRatingToIssue = (id: string, rating: number): { updatedIssue: Ci
         addNotification(admin.id, `A user gave a ${rating}-star rating for the resolved issue: "${updatedIssue.title}".`, NotificationType.RatingReceived);
     }
 
-    return { updatedIssue, updatedUser };
+    return { updatedIssue };
 };
 
-export const addFeedbackToIssue = (id: string, feedback: string): { updatedIssue: CivicIssue | null; updatedUser: User | null; } => {
+export const addFeedbackToIssue = (id: string, feedback: string): { updatedIssue: CivicIssue | null; } => {
     const issues = getIssues();
     const issueIndex = issues.findIndex(issue => issue.id === id);
 
     if (issueIndex === -1) {
         console.error(`Issue with id ${id} not found.`);
-        return { updatedIssue: null, updatedUser: null };
+        return { updatedIssue: null };
     }
 
     const updatedIssue = { ...issues[issueIndex], feedback };
@@ -143,7 +143,7 @@ export const addFeedbackToIssue = (id: string, feedback: string): { updatedIssue
     saveIssues(issues);
     
     // Notify user
-    const updatedUser = addNotification(updatedIssue.userId, `Your feedback for "${updatedIssue.title}" has been received. Thank you!`, NotificationType.FeedbackReceived);
+    addNotification(updatedIssue.userId, `Your feedback for "${updatedIssue.title}" has been received. Thank you!`, NotificationType.FeedbackReceived);
 
     // Notify department admin
     const admin = findAdminByDepartment(updatedIssue.department);
@@ -159,5 +159,5 @@ export const addFeedbackToIssue = (id: string, feedback: string): { updatedIssue
         );
     }
 
-    return { updatedIssue, updatedUser };
+    return { updatedIssue };
 };

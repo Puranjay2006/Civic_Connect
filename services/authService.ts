@@ -63,6 +63,7 @@ export const signUp = (username: string, email: string, password: string, depart
   };
 
   saveUsers([...users, newUser]);
+  localStorage.setItem(SESSION_KEY, JSON.stringify(newUser)); // Create session on sign up
   return newUser;
 };
 
@@ -167,8 +168,8 @@ export const resetPassword = (token: string, newPassword: string): void => {
 
 
 export const addNotification = (
-    userId: string, 
-    message: string, 
+    userId: string,
+    message: string,
     type: NotificationType,
     deliveryMethod: 'in-app' | 'email' = 'in-app',
     emailContent?: NotificationMessage['emailContent']
@@ -193,30 +194,40 @@ export const addNotification = (
     const updatedTargetUser = users[userIndex];
     const currentUser = getCurrentUser();
 
-    // If the notification is for the currently logged-in user, update their session and dispatch an event
-    // to trigger a real-time UI update on their active tab.
-    if (currentUser && currentUser.id === userId) {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedTargetUser));
-        
-        if (deliveryMethod === 'email') {
-             const event = new CustomEvent('show-email-sim', { 
+    // Dispatch the email simulation event ONLY if it's for the current user,
+    // OR if it's a password reset for a logged-out user.
+    if (deliveryMethod === 'email') {
+        const isForCurrentUser = currentUser && currentUser.id === userId;
+        const isPasswordResetForGuest = !currentUser && type === NotificationType.PasswordReset;
+
+        if (isForCurrentUser || isPasswordResetForGuest) {
+            const event = new CustomEvent('show-email-sim', {
                 detail: {
                     ...emailContent,
                     recipient: updatedTargetUser.email,
-                    user: updatedTargetUser // Pass updated user to sync state
-                }
+                    // Only include the user object if it's for the current user.
+                    user: isForCurrentUser ? updatedTargetUser : undefined,
+                },
             });
             window.dispatchEvent(event);
-        } else {
+        }
+    }
+
+    // If the notification is for the currently logged-in user, update their session
+    // and dispatch a toast for in-app notifications.
+    if (currentUser && currentUser.id === userId) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedTargetUser));
+
+        if (deliveryMethod === 'in-app') {
             const event = new CustomEvent('show-toast', {
-                detail: { notification: newNotification, user: updatedTargetUser } // Pass updated user to sync state
+                detail: { notification: newNotification, user: updatedTargetUser },
             });
             window.dispatchEvent(event);
         }
         return updatedTargetUser;
     }
 
-    // If the notification is for another user, their UI will be updated by the 'storage' event listener in App.tsx.
+    // For notifications to other users, the 'storage' event listener in App.tsx handles updates.
     return null;
 };
 
