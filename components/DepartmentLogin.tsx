@@ -22,7 +22,7 @@ const DepartmentLogin: React.FC<DepartmentLoginProps> = ({ onLogin }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDepartment) {
         setError("An unexpected error occurred. Please close and try again.");
@@ -31,8 +31,10 @@ const DepartmentLogin: React.FC<DepartmentLoginProps> = ({ onLogin }) => {
     setError(null);
     setIsLoading(true);
     try {
-      const deptAdmin = await loginAsDepartmentAdmin(selectedDepartment, passkey);
-      onLogin(deptAdmin);
+      const deptAdmin = loginAsDepartmentAdmin(selectedDepartment, passkey);
+      if (deptAdmin) {
+        onLogin(deptAdmin);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
     } finally {

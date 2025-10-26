@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { CivicIssue, Status, Category, User, Department, View } from '../types';
 import { getIssues, updateIssueStatus } from '../services/issueService';
@@ -15,18 +17,17 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDepartment, navigateTo }) => {
   const [issues, setIssues] = useState<CivicIssue[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [filteredIssues, setFilteredIssues] = useState<CivicIssue[]>([]);
   const [filters, setFilters] = useState<{ status: Status | 'all'; category: Category | 'all' }>({
     status: 'all',
     category: 'all',
   });
   const [searchQuery, setSearchQuery] = useState('');
-  
-  const loadIssues = async () => {
-    setIsLoading(true);
-    const allIssues = await getIssues();
+  const [notification, setNotification] = useState<string | null>(null);
+
+  const loadIssues = () => {
+    const allIssues = getIssues().sort((a, b) => b.createdAt - a.createdAt);
     setIssues(allIssues);
-    setIsLoading(false);
   };
   
   useEffect(() => {
@@ -36,13 +37,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDe
   const departmentForView = currentUser.department || selectedDepartment;
 
   const departmentIssues = useMemo(() => {
+    // Super admin uses session department, dept admin uses their own assigned dept
     if (departmentForView) {
         return issues.filter(issue => issue.department === departmentForView);
     }
+    // Super admin before selecting a department (shows all)
     return issues;
   }, [issues, departmentForView]);
 
-  const filteredIssues = useMemo(() => {
+
+  useEffect(() => {
     let tempIssues = [...departmentIssues];
     
     if (filters.status !== 'all') {
@@ -61,12 +65,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDe
         );
     }
 
-    return tempIssues;
+    setFilteredIssues(tempIssues);
   }, [departmentIssues, filters, searchQuery]);
 
-  const handleStatusChange = async (id: string, status: Status) => {
-    await updateIssueStatus(id, status, currentUser);
-    loadIssues(); // Refresh data from Firestore
+  const handleStatusChange = (id: string, status: Status) => {
+    const { updatedIssue } = updateIssueStatus(id, status, currentUser);
+    if (updatedIssue) {
+      loadIssues();
+      // The notification is now handled by the authService and App.tsx toast listener.
+      // setNotification(`Status for issue #${id.slice(-6)} updated to ${status}.`);
+    }
   };
   
   const stats = useMemo(() => {
@@ -85,6 +93,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDe
 
   return (
     <div className="space-y-10">
+      {notification && <Notification message={notification} onClose={() => setNotification(null)} type="success" />}
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
           {dashboardTitle}
@@ -148,9 +157,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, selectedDe
       
       <div>
         <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Reports ({filteredIssues.length})</h3>
-        {isLoading ? (
-            <div className="text-center py-16"><i className="fa-solid fa-spinner animate-spin text-4xl text-blue-500"></i></div>
-        ) : filteredIssues.length > 0 ? (
+        {filteredIssues.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredIssues.map(issue => (
               <IssueCard key={issue.id} issue={issue} isAdmin={true} onStatusChange={handleStatusChange} />

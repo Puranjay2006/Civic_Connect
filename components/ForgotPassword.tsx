@@ -11,23 +11,16 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ navigateTo }) => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
-    try {
-        await requestPasswordReset(email);
-        setIsSubmitted(true);
-    } catch (err) {
-        // Firebase might throw errors (e.g., invalid email), but we can choose to
-        // show a generic success message to prevent user enumeration attacks.
-        // For better UX in this app, we can show a simple error.
-        setError("Failed to send reset email. Please check the address and try again.");
-    } finally {
-        setIsLoading(false);
-    }
+    
+    // The service handles both existing and non-existing emails to prevent user enumeration.
+    requestPasswordReset(email);
+    
+    setIsLoading(false);
+    setIsSubmitted(true);
   };
 
   return (
@@ -39,12 +32,11 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ navigateTo }) => {
                 </div>
                 <h3 className="text-lg font-medium text-slate-900 dark:text-white">Instructions Sent</h3>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                    If an account with that email exists, you will receive an email with password reset instructions shortly.
+                    If an account with that email exists, you will receive a (simulated) email with password reset instructions shortly.
                 </p>
             </div>
         ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-                {error && <p className="text-sm text-red-500">{error}</p>}
                 <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                     Email address

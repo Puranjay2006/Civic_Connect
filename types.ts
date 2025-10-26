@@ -48,7 +48,7 @@ export interface User {
     id: string;
     username: string;
     email: string;
-    // FIX: Removed `passwordHash`. Firebase Auth handles password storage securely, so this property is not needed in the user profile and was causing a type error.
+    passwordHash: string;
     isAdmin: boolean;
     notifications: NotificationMessage[];
     department?: Department;

@@ -13,28 +13,17 @@ interface PublicDashboardProps {
 
 const PublicDashboard: React.FC<PublicDashboardProps> = ({ navigateTo }) => {
   const [issues, setIssues] = useState<CivicIssue[]>([]);
-  const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-        setIsLoading(true);
-        const [allIssues, leaderboard] = await Promise.all([
-            getIssues(),
-            getLeaderboardData()
-        ]);
-        setIssues(allIssues);
-        setTopUsers(leaderboard.slice(0, 5));
-        setIsLoading(false);
-    };
-    fetchData();
+    const allIssues = getIssues();
+    setIssues(allIssues);
   }, []);
 
   const stats = useMemo(() => {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
-    const issuesThisMonth = issues.filter(i => (i.createdAt as any)?.seconds * 1000 >= firstDayOfMonth);
+    const issuesThisMonth = issues.filter(i => i.createdAt >= firstDayOfMonth);
 
     const departmentStats: { [key in Department]: { total: number; resolved: number; totalTime: number; totalRatings: number; ratingSum: number } } = 
       DEPARTMENTS.reduce((acc, dept) => {
@@ -47,9 +36,7 @@ const PublicDashboard: React.FC<PublicDashboardProps> = ({ navigateTo }) => {
             departmentStats[issue.department].total++;
             if (issue.resolvedAt && issue.status === Status.Resolved) {
                 departmentStats[issue.department].resolved++;
-                const resolvedTime = (issue.resolvedAt as any).seconds * 1000;
-                const createdTime = (issue.createdAt as any).seconds * 1000;
-                departmentStats[issue.department].totalTime += (resolvedTime - createdTime);
+                departmentStats[issue.department].totalTime += (issue.resolvedAt - issue.createdAt);
             }
             if(issue.rating) {
                 departmentStats[issue.department].totalRatings++;
@@ -80,11 +67,12 @@ const PublicDashboard: React.FC<PublicDashboardProps> = ({ navigateTo }) => {
     };
   }, [issues]);
 
-  const msToMinutes = (ms: number) => (ms > 0 ? (ms / (1000 * 60)) : 0);
+  const topUsers = useMemo((): LeaderboardUser[] => {
+    return getLeaderboardData().slice(0, 5);
+  }, [issues]);
 
-  if (isLoading) {
-    return <div className="text-center py-20"><i className="fa-solid fa-spinner animate-spin text-5xl text-blue-500"></i></div>;
-  }
+
+  const msToMinutes = (ms: number) => (ms > 0 ? (ms / (1000 * 60)) : 0);
 
   return (
     <div className="space-y-10">

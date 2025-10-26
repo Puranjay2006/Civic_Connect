@@ -4,7 +4,7 @@ import { View } from '../types';
 import AuthLayout from './AuthLayout';
 
 interface ResetPasswordProps {
-  token: string; // This is the oobCode from Firebase
+  token: string;
   navigateTo: (view: View, options?: { message?: string }) => void;
 }
 
@@ -20,17 +20,13 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ token, navigateTo }) => {
       setError("Passwords do not match.");
       return;
     }
-    if (password.length < 6) {
-        setError("Password should be at least 6 characters.");
-        return;
-    }
     setError(null);
     setIsLoading(true);
     try {
-      await resetPassword(token, password);
+      resetPassword(token, password);
       navigateTo('login', { message: 'Your password has been successfully reset. Please sign in.' });
     } catch (err) {
-      setError(err instanceof Error ? "Invalid or expired link. Please try again." : 'An unknown error occurred.');
+      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
     } finally {
       setIsLoading(false);
     }

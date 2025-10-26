@@ -7,28 +7,31 @@ import Notification from './Notification';
 interface MyReportsProps {
   currentUser: User;
   navigateTo: (view: View, options?: { issueId?: string }) => void;
+  setCurrentUser: (user: User) => void;
 }
 
-const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo }) => {
+const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo, setCurrentUser }) => {
   const [myIssues, setMyIssues] = useState<CivicIssue[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState<string | null>(null);
 
-  const loadMyIssues = async () => {
-    setIsLoading(true);
-    const allIssues = await getIssues();
-    const userIssues = allIssues.filter(issue => issue.userId === currentUser.id);
+  const loadMyIssues = () => {
+    const allIssues = getIssues();
+    const userIssues = allIssues
+      .filter(issue => issue.userId === currentUser.id)
+      .sort((a, b) => b.createdAt - a.createdAt);
     setMyIssues(userIssues);
-    setIsLoading(false);
   };
 
   useEffect(() => {
     loadMyIssues();
   }, [currentUser.id]);
 
-  const handleRateIssue = async (id: string, rating: number) => {
-    await addRatingToIssue(id, rating, currentUser);
+  const handleRateIssue = (id: string, rating: number) => {
+    const { updatedUser } = addRatingToIssue(id, rating);
     setNotification("Thank you for your feedback!");
+    if (updatedUser) {
+        setCurrentUser(updatedUser);
+    }
     loadMyIssues(); // Refresh the list to show the new rating
   };
 
@@ -45,9 +48,7 @@ const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo }) => {
       </div>
 
       <div>
-        {isLoading ? (
-             <div className="text-center py-16"><i className="fa-solid fa-spinner animate-spin text-4xl text-blue-500"></i></div>
-        ) : myIssues.length > 0 ? (
+        {myIssues.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {myIssues.map(issue => (
               <IssueCard 

@@ -1,9 +1,11 @@
+// FIX: Import 'useEffect' from 'react' to resolve the 'Cannot find name' error.
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Department } from '../types';
 import { generateDepartmentReport, generateAdminReport, DepartmentReport, AdminReportData } from '../services/reportService';
 import BarChart from './BarChart';
 import DepartmentReportView from './DepartmentReportView';
 
+const msToDays = (ms: number): number => (ms > 0 ? ms / (1000 * 60 * 60 * 24) : 0);
 const msToMinutes = (ms: number): number => (ms > 0 ? ms / (1000 * 60) : 0);
 
 const AdminReportView: React.FC<{ reports: AdminReportData[] }> = ({ reports }) => {
@@ -105,28 +107,20 @@ interface ReportsProps {
 
 const Reports: React.FC<ReportsProps> = ({ currentUser, selectedDepartment }) => {
   const [reportData, setReportData] = useState<DepartmentReport | AdminReportData[] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const departmentToShow = currentUser.department || selectedDepartment;
 
   useEffect(() => {
-    const getReportData = async () => {
-        setIsLoading(true);
-        if (currentUser.isAdmin) {
-          if (departmentToShow) {
-            const report = await generateDepartmentReport(departmentToShow);
-            setReportData(report);
-          } else {
-            const reports = await generateAdminReport();
-            setReportData(reports);
-          }
-        }
-        setIsLoading(false);
-    };
-    getReportData();
+    if (currentUser.isAdmin) {
+      if (departmentToShow) {
+        setReportData(generateDepartmentReport(departmentToShow));
+      } else {
+        setReportData(generateAdminReport());
+      }
+    }
   }, [currentUser, departmentToShow]);
 
-  if (isLoading || !reportData) {
+  if (!reportData) {
     return (
       <div className="text-center py-20">
         <i className="fa-solid fa-spinner animate-spin text-5xl text-blue-500"></i>
