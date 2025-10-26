@@ -15,17 +15,26 @@ export const getChatbotResponse = async (issue: CivicIssue | undefined, issueId:
   const ai = getAi();
   
   let prompt: string;
+  let systemInstruction: string = `You are "Casey", a friendly, empathetic, and professional virtual assistant for the Civic Connect platform. Your primary role is to provide citizens with clear and reassuring status updates about their reported issues.
+- Always be polite and positive.
+- Keep responses concise (2-3 sentences).
+- If an issue is found, clearly state its status and what that means in simple terms.
+- If an issue is NOT found, be apologetic and gently guide the user to double-check their ID.
+- Do not invent information or promise specific resolution times.`;
 
   if (issue) {
-    prompt = `You are a friendly and helpful city service chatbot. A citizen is asking for the status of their complaint with ID "${issueId}". The complaint is about "${issue.title}" and its current status is "${issue.status}". Please provide a helpful and reassuring response. If the status is 'Pending', mention it has been received and is in the queue. If 'In Progress', say that our team is actively working on it. If 'Resolved', thank them for their patience and confirm the issue is fixed. Keep the response concise and positive.`;
+    prompt = `A citizen is asking for the status of their complaint with ID "${issueId}". The complaint is about "${issue.title}" and its current status is "${issue.status}". Please provide a helpful response based on the persona. If the status is 'Pending', mention it has been received and is in the queue for review. If 'In Progress', say that our team is actively working on it. If 'Resolved', thank them for their patience and confirm the issue is fixed.`;
   } else {
-    prompt = `You are a friendly and helpful city service chatbot. A citizen is asking for the status of their complaint with ID "${issueId}", but this ID was not found in our system. Please provide a polite response informing them that the complaint ID is invalid. Ask them to double-check the ID and try again. Suggest they can report a new issue if they can't find their ID.`;
+    prompt = `A citizen is asking for the status of their complaint with ID "${issueId}", but this ID was not found in our system. Please provide a polite response based on the persona, informing them that the complaint ID is invalid. Ask them to double-check the ID and try again. Suggest they can report a new issue if they can't find their ID.`;
   }
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
+      config: {
+        systemInstruction,
+      }
     });
     return response.text;
   } catch (error) {
@@ -71,18 +80,30 @@ export const suggestDepartment = async (title: string, description: string, cate
   }
   const ai = getAi();
   
-  const departmentList = DEPARTMENTS.join(', ');
+  const prompt = `You are an expert routing agent for a city's civic services department. Your task is to analyze a citizen's report and assign it to the correct department.
 
-  const prompt = `You are an intelligent routing agent for a city's civic issue reporting system.
-  Based on the title, description, and category of the issue below, determine the most appropriate city department to handle it.
-  The available departments are: ${departmentList}.
-  
-  Issue Title: "${title}"
-  Issue Description: "${description}"
-  Issue Category: "${category}"
+Here are the available departments and their responsibilities:
+- **Electrical:** Issues with streetlights, power outages, exposed wiring, faulty traffic signals.
+- **Water:** Leaking pipes, water main breaks, sewage problems, drainage and flooding issues.
+- **Medical:** Public health emergencies, requests for emergency medical services (if non-critical), unsanitary conditions in public food establishments.
+- **Sanitation:** Garbage collection (missed, overflowing bins), illegal dumping, street cleaning, large debris removal.
+- **Roads:** Potholes, damaged sidewalks, faded road markings, broken signs, debris on the road.
 
-  Respond with ONLY the name of the single most appropriate department from the list. For example, if the issue is about a broken water pipe, respond with "Water".
-  If you are not confident or the issue does not clearly fit into any of the listed departments, respond with "unknown".`;
+Analyze the following issue report and determine the single most appropriate department.
+
+**Examples:**
+- **Issue:** "My street light is flickering" -> **Department:** Electrical
+- **Issue:** "There's a huge pothole in front of my house." -> **Department:** Roads
+- **Issue:** "The garbage truck missed our street this week and the bins are overflowing." -> **Department:** Sanitation
+- **Issue:** "Water is bubbling up from a crack in the street." -> **Department:** Water
+
+**Citizen's Report to Analyze:**
+- **Title:** "${title}"
+- **Description:** "${description}"
+- **Category:** "${category}"
+
+Based on this information, which department should handle this issue?
+Respond with ONLY the name of the department from the list. If you are uncertain or the issue doesn't fit, respond with "unknown".`;
 
   try {
     const response = await ai.models.generateContent({
@@ -91,9 +112,17 @@ export const suggestDepartment = async (title: string, description: string, cate
     });
     const suggestedDept = response.text.trim();
 
-    // Check if the response is a valid department
+    // Check for an exact match first
     if (Object.values(Department).includes(suggestedDept as Department)) {
       return suggestedDept as Department;
+    }
+    
+    // If no exact match, check if the response contains a department name.
+    // This handles cases where the model might be verbose (e.g., "The department is Roads.")
+    for (const dept of DEPARTMENTS) {
+        if (suggestedDept.includes(dept)) {
+            return dept;
+        }
     }
     
     return 'unknown';
@@ -141,5 +170,25 @@ export const getReportInsights = async (report: DepartmentReport, departmentName
   } catch (error) {
     console.error("Error calling Gemini API for insights:", error);
     return "Could not generate insights at this time.";
+  }
+};
+
+
+export const summarizeIssue = async (description: string): Promise<string> => {
+  if (!description.trim()) {
+    return "No description provided.";
+  }
+  const ai = getAi();
+  const prompt = `Summarize the following civic issue description into one clear and concise sentence for a busy city official. The summary should capture the core problem. Description: "${description}"`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+    return response.text;
+  } catch (error) {
+    console.error("Error calling Gemini API for summarization:", error);
+    throw new Error("Could not generate summary.");
   }
 };

@@ -48,7 +48,7 @@ export interface User {
     id: string;
     username: string;
     email: string;
-    passwordHash: string;
+    // FIX: Removed `passwordHash`. Firebase Auth handles password storage securely, so this property is not needed in the user profile and was causing a type error.
     isAdmin: boolean;
     notifications: NotificationMessage[];
     department?: Department;
@@ -94,7 +94,6 @@ export type View =
   | 'login'
   | 'admin-login'
   | 'admin-role-select'
-  | 'admin-passkey'
   | 'department-login'
   | 'signup'
   | 'notifications'

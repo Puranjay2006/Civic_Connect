@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CivicIssue, User, View } from '../types';
 import { getIssues, addRatingToIssue } from '../services/issueService';
@@ -8,31 +7,28 @@ import Notification from './Notification';
 interface MyReportsProps {
   currentUser: User;
   navigateTo: (view: View, options?: { issueId?: string }) => void;
-  setCurrentUser: (user: User) => void;
 }
 
-const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo, setCurrentUser }) => {
+const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo }) => {
   const [myIssues, setMyIssues] = useState<CivicIssue[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState<string | null>(null);
 
-  const loadMyIssues = () => {
-    const allIssues = getIssues();
-    const userIssues = allIssues
-      .filter(issue => issue.userId === currentUser.id)
-      .sort((a, b) => b.createdAt - a.createdAt);
+  const loadMyIssues = async () => {
+    setIsLoading(true);
+    const allIssues = await getIssues();
+    const userIssues = allIssues.filter(issue => issue.userId === currentUser.id);
     setMyIssues(userIssues);
+    setIsLoading(false);
   };
 
   useEffect(() => {
     loadMyIssues();
   }, [currentUser.id]);
 
-  const handleRateIssue = (id: string, rating: number) => {
-    const { updatedUser } = addRatingToIssue(id, rating);
+  const handleRateIssue = async (id: string, rating: number) => {
+    await addRatingToIssue(id, rating, currentUser);
     setNotification("Thank you for your feedback!");
-    if (updatedUser) {
-        setCurrentUser(updatedUser);
-    }
     loadMyIssues(); // Refresh the list to show the new rating
   };
 
@@ -49,7 +45,9 @@ const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo, setCurre
       </div>
 
       <div>
-        {myIssues.length > 0 ? (
+        {isLoading ? (
+             <div className="text-center py-16"><i className="fa-solid fa-spinner animate-spin text-4xl text-blue-500"></i></div>
+        ) : myIssues.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {myIssues.map(issue => (
               <IssueCard 
@@ -64,11 +62,18 @@ const MyReports: React.FC<MyReportsProps> = ({ currentUser, navigateTo, setCurre
           </div>
         ) : (
           <div className="text-center py-16 bg-white dark:bg-slate-800/50 rounded-xl shadow-md border border-slate-200 dark:border-slate-700">
-             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900/50">
-               <i className="fa-solid fa-file-circle-question text-2xl text-slate-500 dark:text-slate-400"></i>
+             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/50 mb-5">
+               <i className="fa-solid fa-file-circle-plus text-4xl text-blue-500 dark:text-blue-400"></i>
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-slate-800 dark:text-white">No Reports Yet</h3>
-            <p className="mt-2 text-slate-500 dark:text-slate-400">You haven't reported any issues. Be the first!</p>
+            <h3 className="mt-4 text-xl font-semibold text-slate-800 dark:text-white">You haven't reported any issues yet.</h3>
+            <p className="mt-2 text-slate-500 dark:text-slate-400">See a problem in your community? Be the one to get it fixed.</p>
+            <button
+                onClick={() => navigateTo('report')}
+                className="mt-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-8 rounded-full hover:from-blue-600 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg text-base flex items-center justify-center gap-3 mx-auto"
+              >
+                <i className="fa-solid fa-bullhorn"></i>
+                Report Your First Issue
+              </button>
           </div>
         )}
       </div>

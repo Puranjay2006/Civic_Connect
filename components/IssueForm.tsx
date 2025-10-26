@@ -8,7 +8,6 @@ import { geocodeLocation, suggestDepartment } from '../services/geminiService';
 interface IssueFormProps {
   currentUser: User;
   onIssueReported: (issue: CivicIssue) => void;
-  setCurrentUser: (user: User) => void;
 }
 
 // Debounce helper function to delay API calls
@@ -25,7 +24,7 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported, setCurrentUser }) => {
+const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>(Category.Other);
@@ -125,10 +124,14 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported, set
         setIsGeocoding(false);
     }
   };
-
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB size limit
+          setError("File is too large. Please upload a photo smaller than 2MB.");
+          return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhoto(reader.result as string);
@@ -147,10 +150,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported, set
     setError(null);
     try {
       const newIssueData = { title, description, category, photo, location, department };
-      const { newIssue, updatedUser } = addIssue(newIssueData, currentUser);
-      if (updatedUser) {
-        setCurrentUser(updatedUser);
-      }
+      const { newIssue } = await addIssue(newIssueData, currentUser);
       onIssueReported(newIssue);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -227,6 +227,19 @@ const IssueForm: React.FC<IssueFormProps> = ({ currentUser, onIssueReported, set
                    </p>
                 )}
               </div>
+            </div>
+            {/* SLA Information */}
+            <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Target (SLA)
+                    <div className="tooltip inline-block ml-2">
+                        <i className="fa-solid fa-info-circle text-slate-400 cursor-pointer"></i>
+                        <span className="tooltiptext">SLA (Service Level Agreement): The maximum time within which your request will be resolved.</span>
+                    </div>
+                </label>
+                <div className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
+                    <p className="text-sm text-slate-800 dark:text-slate-200 font-medium">Maximum 3 hours (for demo purposes)</p>
+                </div>
             </div>
           <div>
             <label htmlFor="photo" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Upload Photo</label>

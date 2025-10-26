@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { login } from '../services/authService';
+import { signIn } from '../services/authService';
 import { User, View } from '../types';
 import AuthLayout from './AuthLayout';
 import Notification from './Notification';
@@ -11,7 +11,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, navigateTo, message }) => {
-  const [identifier, setIdentifier] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,12 +21,17 @@ const Login: React.FC<LoginProps> = ({ onLogin, navigateTo, message }) => {
     setError(null);
     setIsLoading(true);
     try {
-      const user = login(identifier, password);
-      if (user) {
-        onLogin(user);
+      // In Firebase Auth, username login requires extra steps.
+      // For simplicity, we'll guide the user to use their email.
+      if (!email.includes('@')) {
+          setError("Please sign in with your email address.");
+          setIsLoading(false);
+          return;
       }
+      const user = await signIn(email, password);
+      onLogin(user);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+      setError(err instanceof Error ? err.message : 'Invalid credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -43,17 +48,17 @@ const Login: React.FC<LoginProps> = ({ onLogin, navigateTo, message }) => {
             </div>
         )}
         <div>
-          <label htmlFor="identifier" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Email or Username
+          <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Email Address
           </label>
           <input
-            id="identifier"
-            name="identifier"
-            type="text"
-            autoComplete="username"
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
             required
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-slate-700 dark:border-slate-600 transition"
           />
         </div>

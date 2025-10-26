@@ -1,14 +1,15 @@
-
-
 import { CivicIssue, Department, Status, Category, User, LeaderboardUser } from '../types';
 import { getIssues } from './issueService';
-import { DEPARTMENTS, ISSUE_CATEGORIES } from '../constants';
+import { DEPARTMENTS } from '../constants';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
-const SLA_TARGET_DAYS = 3;
-const OVERDUE_TARGET_DAYS = 7;
 
-const SLA_TARGET_MS = SLA_TARGET_DAYS * 24 * 60 * 60 * 1000;
-const OVERDUE_TARGET_MS = OVERDUE_TARGET_DAYS * 24 * 60 * 60 * 1000;
+const SLA_TARGET_HOURS = 3; // For demo purposes
+const OVERDUE_TARGET_HOURS = 3; // For demo purposes
+
+const SLA_TARGET_MS = SLA_TARGET_HOURS * 60 * 60 * 1000;
+const OVERDUE_TARGET_MS = OVERDUE_TARGET_HOURS * 60 * 60 * 1000;
 
 const msToDays = (ms: number): number => (ms > 0 ? ms / (1000 * 60 * 60 * 24) : 0);
 
@@ -34,14 +35,15 @@ export interface AdminReportData extends DepartmentReport {
     department: Department;
 }
 
-const getUsers = (): User[] => {
-  const usersJson = localStorage.getItem('civic-users');
-  return usersJson ? JSON.parse(usersJson) : [];
+const getUsers = async (): Promise<User[]> => {
+  const usersCollectionRef = collection(db, 'users');
+  const data = await getDocs(usersCollectionRef);
+  return data.docs.map(doc => ({ ...doc.data() as User }));
 };
 
-export const getLeaderboardData = (): LeaderboardUser[] => {
-    const allIssues = getIssues();
-    const allUsers = getUsers().filter(u => !u.isAdmin);
+export const getLeaderboardData = async (): Promise<LeaderboardUser[]> => {
+    const allIssues = await getIssues();
+    const allUsers = (await getUsers()).filter(u => !u.isAdmin);
 
     const userScores = allUsers.map(user => {
         const userIssues = allIssues.filter(issue => issue.userId === user.id);
@@ -64,9 +66,16 @@ export const getLeaderboardData = (): LeaderboardUser[] => {
     return userScores.sort((a, b) => b.score - a.score);
 };
 
+// Helper to convert Firestore Timestamp to milliseconds
+const toMillis = (timestamp: any): number => {
+    if (timestamp && typeof timestamp.toMillis === 'function') {
+        return timestamp.toMillis();
+    }
+    return timestamp; // Assume it's already a number if it's not a Timestamp object
+};
 
-export const generateDepartmentReport = (department: Department): DepartmentReport => {
-    const allIssues = getIssues();
+export const generateDepartmentReport = async (department: Department): Promise<DepartmentReport> => {
+    const allIssues = await getIssues();
     const deptIssues = allIssues.filter(i => i.department === department);
     
     const resolvedIssues = deptIssues.filter(i => i.status === Status.Resolved && i.resolvedAt);
@@ -78,29 +87,26 @@ export const generateDepartmentReport = (department: Department): DepartmentRepo
 
     const overdueRequests = deptIssues.filter(i => 
         (i.status === Status.Pending || i.status === Status.InProgress) && 
-        (Date.now() - i.createdAt > OVERDUE_TARGET_MS)
+        (Date.now() - toMillis(i.createdAt) > OVERDUE_TARGET_MS)
     ).length;
 
     const totalResolutionTime = resolvedIssues.reduce((acc, issue) => {
-        return acc + (issue.resolvedAt! - issue.createdAt);
+        return acc + (toMillis(issue.resolvedAt!) - toMillis(issue.createdAt));
     }, 0);
     const avgResolutionTimeMs = resolvedRequests > 0 ? totalResolutionTime / resolvedRequests : 0;
 
-    const slaCompliantCount = resolvedIssues.filter(i => (i.resolvedAt! - i.createdAt) <= SLA_TARGET_MS).length;
+    const slaCompliantCount = resolvedIssues.filter(i => (toMillis(i.resolvedAt!) - toMillis(i.createdAt)) <= SLA_TARGET_MS).length;
     const slaComplianceRate = resolvedRequests > 0 ? (slaCompliantCount / resolvedRequests) * 100 : 100;
 
     const ratedIssues = deptIssues.filter(i => i.rating !== null && i.rating > 0);
     const totalRating = ratedIssues.reduce((acc, issue) => acc + issue.rating!, 0);
     const avgSatisfaction = ratedIssues.length > 0 ? totalRating / ratedIssues.length : 0;
 
-    // New: Category Distribution
     const categoryDistribution = deptIssues.reduce((acc, issue) => {
         acc[issue.category] = (acc[issue.category] || 0) + 1;
         return acc;
     }, {} as { [key in Category]?: number });
 
-
-    // New: Weekly Trends (last 8 weeks)
     const weeklyTrends: TimeTrend[] = [];
     const now = new Date();
     for (let i = 7; i >= 0; i--) {
@@ -110,12 +116,13 @@ export const generateDepartmentReport = (department: Department): DepartmentRepo
         weekStart.setDate(weekStart.getDate() - 6);
         weekStart.setHours(0, 0, 0, 0);
 
-        const issuesInWeek = resolvedIssues.filter(issue => 
-            issue.resolvedAt! >= weekStart.getTime() && issue.resolvedAt! <= weekEnd.getTime()
-        );
+        const issuesInWeek = resolvedIssues.filter(issue => {
+            const resolvedAtMs = toMillis(issue.resolvedAt!);
+            return resolvedAtMs >= weekStart.getTime() && resolvedAtMs <= weekEnd.getTime();
+        });
 
         if (issuesInWeek.length > 0) {
-            const weeklyTotalTime = issuesInWeek.reduce((acc, issue) => acc + (issue.resolvedAt! - issue.createdAt), 0);
+            const weeklyTotalTime = issuesInWeek.reduce((acc, issue) => acc + (toMillis(issue.resolvedAt!) - toMillis(issue.createdAt)), 0);
             weeklyTrends.push({
                 period: `W${i}`,
                 avgResolutionTimeDays: msToDays(weeklyTotalTime / issuesInWeek.length)
@@ -124,7 +131,6 @@ export const generateDepartmentReport = (department: Department): DepartmentRepo
              weeklyTrends.push({ period: `W${i}`, avgResolutionTimeDays: 0 });
         }
     }
-
 
     return {
         totalRequests,
@@ -140,12 +146,13 @@ export const generateDepartmentReport = (department: Department): DepartmentRepo
     };
 };
 
-export const generateAdminReport = (): AdminReportData[] => {
-    return DEPARTMENTS.map(dept => {
-        const report = generateDepartmentReport(dept);
+export const generateAdminReport = async (): Promise<AdminReportData[]> => {
+    const reports = await Promise.all(DEPARTMENTS.map(async (dept) => {
+        const report = await generateDepartmentReport(dept);
         return {
             department: dept,
             ...report
         };
-    });
+    }));
+    return reports;
 };

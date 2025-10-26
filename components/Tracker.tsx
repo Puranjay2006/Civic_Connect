@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { getIssueById } from '../services/issueService';
 import { getChatbotResponse } from '../services/geminiService';
@@ -22,11 +21,12 @@ const Tracker: React.FC = () => {
     const userMessage: Message = { sender: 'user', text: `Check ID: ${issueId}` };
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+    const idToTrack = issueId.trim();
     setIssueId('');
     
     try {
-      const issue = getIssueById(issueId.trim());
-      const botResponseText = await getChatbotResponse(issue, issueId.trim());
+      const issue = await getIssueById(idToTrack);
+      const botResponseText = await getChatbotResponse(issue, idToTrack);
       const botMessage: Message = { sender: 'bot', text: botResponseText };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {

@@ -4,6 +4,7 @@ import { User, View } from '../types';
 interface HomeProps {
   navigateTo: (view: View) => void;
   currentUser: User | null;
+  onLogout: () => void;
 }
 
 const CityIllustration = () => (
@@ -22,7 +23,7 @@ const CityIllustration = () => (
     </div>
   );
 
-const Home: React.FC<HomeProps> = ({ navigateTo, currentUser }) => {
+const Home: React.FC<HomeProps> = ({ navigateTo, currentUser, onLogout }) => {
   if (currentUser) {
     return (
       <div className="min-h-full flex items-center justify-center p-4">
@@ -58,11 +59,23 @@ const Home: React.FC<HomeProps> = ({ navigateTo, currentUser }) => {
               {!currentUser.department && (
                  <button
                     onClick={() => navigateTo('admin-department-select')}
-                    className="group w-full sm:w-auto bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-4 px-10 rounded-full hover:bg-white/80 dark:hover:bg-slate-600/80 transition-all transform hover:scale-105 hover:shadow-xl text-lg flex items-center justify-center gap-3"
+                    className="group w-full sm:w-auto bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-bold py-4 px-10 rounded-full hover:from-teal-600 hover:to-cyan-700 transition-all transform hover:scale-105 hover:shadow-2xl text-lg flex items-center justify-center gap-3"
                   >
                     <i className="fa-solid fa-building-user group-hover:scale-110 transition-transform"></i>
                     Choose Department
                   </button>
+              )}
+               {currentUser.department && (
+                <button
+                  onClick={() => {
+                    onLogout();
+                    navigateTo('department-login');
+                  }}
+                  className="group w-full sm:w-auto bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-bold py-4 px-10 rounded-full hover:from-teal-600 hover:to-cyan-700 transition-all transform hover:scale-105 hover:shadow-2xl text-lg flex items-center justify-center gap-3"
+                >
+                  <i className="fa-solid fa-right-left group-hover:rotate-12 transition-transform"></i>
+                  Change Department
+                </button>
               )}
             </div>
           ) : (

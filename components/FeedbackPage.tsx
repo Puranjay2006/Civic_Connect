@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, CivicIssue, User } from '../types';
 import { getIssueById, addFeedbackToIssue } from '../services/issueService';
@@ -6,11 +5,11 @@ import Notification from './Notification';
 
 interface FeedbackPageProps {
   issueId: string;
+  currentUser: User;
   navigateTo: (view: View) => void;
-  setCurrentUser: (user: User) => void;
 }
 
-const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo, setCurrentUser }) => {
+const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, currentUser, navigateTo }) => {
   const [issue, setIssue] = useState<CivicIssue | null>(null);
   const [feedback, setFeedback] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,16 +17,19 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo, setCur
   const [notification, setNotification] = useState<string | null>(null);
 
   useEffect(() => {
-    const foundIssue = getIssueById(issueId);
-    if (foundIssue) {
-      setIssue(foundIssue);
-      setFeedback(foundIssue.feedback || '');
-    } else {
-      setError('Could not find the specified issue.');
-    }
+    const fetchIssue = async () => {
+        const foundIssue = await getIssueById(issueId);
+        if (foundIssue) {
+          setIssue(foundIssue);
+          setFeedback(foundIssue.feedback || '');
+        } else {
+          setError('Could not find the specified issue.');
+        }
+    };
+    fetchIssue();
   }, [issueId]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedback.trim()) {
         setError("Please provide your feedback before submitting.");
@@ -37,10 +39,7 @@ const FeedbackPage: React.FC<FeedbackPageProps> = ({ issueId, navigateTo, setCur
     setError(null);
     
     try {
-        const { updatedUser } = addFeedbackToIssue(issueId, feedback);
-        if (updatedUser) {
-            setCurrentUser(updatedUser);
-        }
+        await addFeedbackToIssue(issueId, feedback, currentUser);
         setNotification("Your feedback has been submitted successfully!");
         setTimeout(() => {
             navigateTo('my-reports');

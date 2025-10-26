@@ -12,7 +12,11 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0"
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.4.0/"
   }
 }
 </script>
@@ -41,12 +45,21 @@
     100% { background-position: 0% 50%; }
   }
   .float-animation {
-    animation: float 6s ease-in-out infinite;
+    animation: float 8s ease-in-out infinite;
   }
   @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+    0% {
+      transform: translateY(0px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    50% {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 25px -8px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+    100% {
+      transform: translateY(0px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
   }
 
   .card-fade-in-up {
@@ -62,12 +75,36 @@
     }
   }
 
+  /* Added for new department cards */
+  @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+  }
+  .animate-pop-in {
+    animation: popIn 0.5s ease-out forwards;
+  }
+
+
   .dropdown-fade-in {
     animation: dropdownFadeIn 0.2s ease-out forwards;
   }
   @keyframes dropdownFadeIn {
     from { opacity: 0; transform: translateY(-10px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .mobile-menu-animate {
+    animation: mobileMenuFadeSlideDown 0.3s ease-out forwards;
+  }
+  @keyframes mobileMenuFadeSlideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .hamburger {
@@ -88,7 +125,7 @@
     left: 0;
     background: #334155; /* slate-700 */
     transform: rotate(0);
-    transition: all 0.5s;
+    transition: all 0.4s cubic-bezier(0.68, -0.6, 0.32, 1.6);
     border-radius: 2px;
   }
 
@@ -111,7 +148,8 @@
   }
 
   .open .hamburger-middle {
-    display: none;
+    opacity: 0;
+    transform: translateY(7px) scaleX(0);
   }
 
   .open .hamburger-bottom {
@@ -140,6 +178,54 @@
     to {
       background-position: 200% center;
     }
+  }
+
+  /* Tooltip styles */
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 220px;
+    background-color: #334155; /* slate-700 */
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -110px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .dark .tooltip .tooltiptext {
+      background-color: #f1f5f9; /* slate-100 */
+      color: #1e293b; /* slate-800 */
+  }
+
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #334155 transparent transparent transparent;
+  }
+
+  .dark .tooltip .tooltiptext::after {
+      border-color: #f1f5f9 transparent transparent transparent;
+  }
+
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
   }
 </style>
 <script>

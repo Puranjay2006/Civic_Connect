@@ -13,17 +13,28 @@ interface PublicDashboardProps {
 
 const PublicDashboard: React.FC<PublicDashboardProps> = ({ navigateTo }) => {
   const [issues, setIssues] = useState<CivicIssue[]>([]);
+  const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const allIssues = getIssues();
-    setIssues(allIssues);
+    const fetchData = async () => {
+        setIsLoading(true);
+        const [allIssues, leaderboard] = await Promise.all([
+            getIssues(),
+            getLeaderboardData()
+        ]);
+        setIssues(allIssues);
+        setTopUsers(leaderboard.slice(0, 5));
+        setIsLoading(false);
+    };
+    fetchData();
   }, []);
 
   const stats = useMemo(() => {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
-    const issuesThisMonth = issues.filter(i => i.createdAt >= firstDayOfMonth);
+    const issuesThisMonth = issues.filter(i => (i.createdAt as any)?.seconds * 1000 >= firstDayOfMonth);
 
     const departmentStats: { [key in Department]: { total: number; resolved: number; totalTime: number; totalRatings: number; ratingSum: number } } = 
       DEPARTMENTS.reduce((acc, dept) => {
@@ -36,7 +47,9 @@ const PublicDashboard: React.FC<PublicDashboardProps> = ({ navigateTo }) => {
             departmentStats[issue.department].total++;
             if (issue.resolvedAt && issue.status === Status.Resolved) {
                 departmentStats[issue.department].resolved++;
-                departmentStats[issue.department].totalTime += (issue.resolvedAt - issue.createdAt);
+                const resolvedTime = (issue.resolvedAt as any).seconds * 1000;
+                const createdTime = (issue.createdAt as any).seconds * 1000;
+                departmentStats[issue.department].totalTime += (resolvedTime - createdTime);
             }
             if(issue.rating) {
                 departmentStats[issue.department].totalRatings++;
@@ -67,12 +80,11 @@ const PublicDashboard: React.FC<PublicDashboardProps> = ({ navigateTo }) => {
     };
   }, [issues]);
 
-  const topUsers = useMemo((): LeaderboardUser[] => {
-    return getLeaderboardData().slice(0, 5);
-  }, [issues]);
-
-
   const msToMinutes = (ms: number) => (ms > 0 ? (ms / (1000 * 60)) : 0);
+
+  if (isLoading) {
+    return <div className="text-center py-20"><i className="fa-solid fa-spinner animate-spin text-5xl text-blue-500"></i></div>;
+  }
 
   return (
     <div className="space-y-10">
@@ -83,19 +95,31 @@ const PublicDashboard: React.FC<PublicDashboardProps> = ({ navigateTo }) => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <div className="p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center">
+        <div
+          className="p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center float-animation transform hover:-translate-y-2 transition-all duration-300"
+          style={{ animationDelay: '0ms' }}
+        >
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Issues Logged This Month</p>
             <p className="text-4xl font-bold text-blue-600 dark:text-blue-400 mt-2">{stats.issuesThisMonth}</p>
         </div>
-        <div className="p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center">
+        <div
+          className="p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center float-animation transform hover:-translate-y-2 transition-all duration-300"
+          style={{ animationDelay: '150ms' }}
+        >
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Issues Pending</p>
             <p className="text-4xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">{stats.overallPending}</p>
         </div>
-        <div className="p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center">
+        <div
+          className="p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center float-animation transform hover:-translate-y-2 transition-all duration-300"
+          style={{ animationDelay: '300ms' }}
+        >
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Issues In Progress</p>
             <p className="text-4xl font-bold text-orange-600 dark:text-orange-400 mt-2">{stats.overallInProgress}</p>
         </div>
-        <div className="p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center">
+        <div
+          className="p-6 bg-white dark:bg-slate-800/50 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-center float-animation transform hover:-translate-y-2 transition-all duration-300"
+          style={{ animationDelay: '450ms' }}
+        >
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Issues Resolved</p>
             <p className="text-4xl font-bold text-green-600 dark:text-green-400 mt-2">{stats.overallResolved}</p>
         </div>

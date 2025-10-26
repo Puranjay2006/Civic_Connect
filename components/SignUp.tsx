@@ -20,12 +20,21 @@ const SignUp: React.FC<SignUpProps> = ({ onSignUp, navigateTo }) => {
     setError(null);
     setIsLoading(true);
     try {
-      const newUser = signUp(username, email, password);
-      if (newUser) {
-        onSignUp(newUser);
-      }
+      const newUser = await signUp(username, email, password);
+      onSignUp(newUser);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+      let message = 'An unknown error occurred.';
+      if (err instanceof Error) {
+          // Firebase provides detailed error messages we can show to the user
+          if (err.message.includes('auth/email-already-in-use')) {
+              message = 'This email address is already in use by another account.';
+          } else if (err.message.includes('auth/weak-password')) {
+              message = 'Password should be at least 6 characters.';
+          } else {
+              message = err.message;
+          }
+      }
+      setError(message);
     } finally {
       setIsLoading(false);
     }

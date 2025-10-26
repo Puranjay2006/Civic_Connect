@@ -17,10 +17,8 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
     setError(null);
     setIsLoading(true);
     try {
-      const adminUser = loginAsSuperAdmin(passkey);
-      if (adminUser) {
-        onLogin(adminUser);
-      }
+      const adminUser = await loginAsSuperAdmin(passkey);
+      onLogin(adminUser);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
     } finally {

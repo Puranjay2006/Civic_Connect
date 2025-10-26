@@ -1,11 +1,20 @@
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged as onFirebaseAuthStateChanged,
+  sendPasswordResetEmail,
+  confirmPasswordReset
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import { User, NotificationMessage, Department, NotificationType } from '../types';
 
-const USERS_KEY = 'civic-users';
-const SESSION_KEY = 'civic-session';
+const auth = getAuth();
 
-// New Passkey Structure
+// Passkey constants remain for initial admin login logic
 const SUPER_ADMIN_PASSKEY = 'ykls_764';
-const MAIN_ADMIN_PASSKEY = 'ljn_987';
 const DEPARTMENT_PASSKEYS: { [key in Department]: string } = {
     [Department.Electrical]: 'ljn_9871',
     [Department.Water]: 'ljn_9872',
@@ -14,228 +23,167 @@ const DEPARTMENT_PASSKEYS: { [key in Department]: string } = {
     [Department.Roads]: 'ljn_9875',
 };
 
-// Helper to get users from localStorage
-const getUsers = (): User[] => {
-  const usersJson = localStorage.getItem(USERS_KEY);
-  return usersJson ? JSON.parse(usersJson) : [];
+// --- User Profile Management (Firestore) ---
+
+// Get a user's full profile from Firestore
+export const getUserProfile = async (uid: string): Promise<User | null> => {
+    const userDocRef = doc(db, 'users', uid);
+    const userSnap = await getDoc(userDocRef);
+    if (userSnap.exists()) {
+        return userSnap.data() as User;
+    }
+    return null;
 };
 
-// Helper to save users to localStorage
-const saveUsers = (users: User[]) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+// --- Authentication Logic (Firebase Auth) ---
+
+export const signUp = async (username: string, email: string, password: string, department?: Department): Promise<User> => {
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+        throw new Error('Username must be 3-20 characters long and can only contain letters, numbers, and underscores.');
+    }
+    
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
+
+    const newUser: User = {
+        id: firebaseUser.uid,
+        username: username,
+        email: email.toLowerCase(),
+        isAdmin: email.toLowerCase().includes('@city.gov'),
+        notifications: [],
+        department: department,
+    };
+    
+    // Create user profile in Firestore
+    await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+    
+    return newUser;
 };
 
-// Simulate a secure password hash
-const pseudoHash = (password: string): string => {
-  return `hashed_${password}_salted`;
+export const signIn = async (email: string, password: string): Promise<User> => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userProfile = await getUserProfile(userCredential.user.uid);
+    if (!userProfile) {
+        throw new Error("Could not find user profile.");
+    }
+    return userProfile;
 };
 
-export const signUp = (username: string, email: string, password: string, department?: Department): User | null => {
-  const users = getUsers();
-  
-  // Username validation
-  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-    throw new Error('Username must be 3-20 characters long and can only contain letters, numbers, and underscores.');
-  }
-  const existingUserByUsername = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-  if (existingUserByUsername) {
-    throw new Error('This username is already taken.');
-  }
-
-  // Email validation
-  const existingUserByEmail = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (existingUserByEmail) {
-    throw new Error('An account with this email already exists.');
-  }
-
-  const newUser: User = {
-    id: `user-${Date.now()}`,
-    username: username,
-    email: email.toLowerCase(),
-    passwordHash: pseudoHash(password),
-    isAdmin: email.toLowerCase().includes('@city.gov'), // Make all city.gov admins
-    notifications: [],
-    department: department,
-  };
-
-  saveUsers([...users, newUser]);
-  return newUser;
-};
-
-export const login = (identifier: string, password: string): User | null => {
-  const users = getUsers();
-  const lowercasedIdentifier = identifier.toLowerCase();
-  const user = users.find(u => 
-    u.email.toLowerCase() === lowercasedIdentifier || 
-    u.username.toLowerCase() === lowercasedIdentifier
-  );
-
-  if (user && user.passwordHash === pseudoHash(password)) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    return user;
-  }
-
-  throw new Error('Invalid credentials.');
-};
-
-export const verifyMainAdminPasskey = (passkey: string): boolean => {
-    return passkey === MAIN_ADMIN_PASSKEY;
-};
-
-export const loginAsSuperAdmin = (passkey: string): User => {
+export const loginAsSuperAdmin = async (passkey: string): Promise<User> => {
     if (passkey !== SUPER_ADMIN_PASSKEY) {
         throw new Error('Invalid Super Admin Passkey.');
     }
-    const users = getUsers();
-    let adminUser = users.find(u => u.email.toLowerCase() === 'admin@city.gov');
-    if (!adminUser) {
-        console.log("Super admin user not found, creating one.");
-        adminUser = signUp('admin', 'admin@city.gov', 'default_admin_password_placeholder');
-        if (!adminUser) throw new Error('Could not create super admin user.');
+    // Super admin uses a default email/password for the initial sign-in
+    const email = 'admin@city.gov';
+    const password = 'default_admin_password_placeholder'; // In a real app, this should be more secure
+    
+    try {
+        return await signIn(email, password);
+    } catch (error: any) {
+        // If the admin user doesn't exist, create it
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            return await signUp('admin', email, password);
+        }
+        throw error;
     }
-    localStorage.setItem(SESSION_KEY, JSON.stringify(adminUser));
-    return adminUser;
-}
+};
 
-export const loginAsDepartmentAdmin = (department: Department, passkey: string): User => {
+export const loginAsDepartmentAdmin = async (department: Department, passkey: string): Promise<User> => {
     if (DEPARTMENT_PASSKEYS[department] !== passkey) {
         throw new Error('Invalid Passkey for this department.');
     }
     
-    const users = getUsers();
-    const deptEmail = `${department.toLowerCase()}@city.gov`;
-    let deptAdmin = users.find(u => u.email.toLowerCase() === deptEmail);
-
-    if (!deptAdmin) {
-        console.log(`Department admin for ${department} not found, creating one.`);
-        deptAdmin = signUp(department, deptEmail, 'default_dept_password', department);
-        if (!deptAdmin) throw new Error(`Could not create admin for ${department}.`);
-    }
-    localStorage.setItem(SESSION_KEY, JSON.stringify(deptAdmin));
-    return deptAdmin;
-}
-
-export const logout = (): void => {
-  localStorage.removeItem(SESSION_KEY);
-};
-
-export const getCurrentUser = (): User | null => {
-  const sessionJson = localStorage.getItem(SESSION_KEY);
-  return sessionJson ? JSON.parse(sessionJson) : null;
-};
-
-export const requestPasswordReset = (email: string): void => {
-    const users = getUsers();
-    const userIndex = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+    const email = `${department.toLowerCase()}@city.gov`;
+    const password = 'default_dept_password'; // Keep it simple for demo purposes
     
-    if (userIndex > -1) {
-        const token = `reset-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-        const expires = Date.now() + 3600000; // 1 hour expiry
-
-        users[userIndex].passwordResetToken = token;
-        users[userIndex].passwordResetExpires = expires;
-        saveUsers(users);
-        
-        const resetLink = `#reset-password/${token}`;
-
-        // Create a rich simulated email notification
-        const emailContent = {
-            subject: "Your Password Reset Request",
-            body: `Hello ${users[userIndex].username},\n\nA password reset was requested for your Civic Connect account. If you did not make this request, you can safely ignore this email.\n\nTo reset your password, please click the button below. This link will expire in one hour.`,
-            cta: { text: 'Reset Your Password', link: resetLink }
-        };
-
-        addNotification(users[userIndex].id, 'A password reset was requested for your account.', NotificationType.PasswordReset, 'email', emailContent);
+    try {
+        return await signIn(email, password);
+    } catch (error: any) {
+         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            return await signUp(department, email, password, department);
+        }
+        throw error;
     }
 };
 
-export const resetPassword = (token: string, newPassword: string): void => {
-    const users = getUsers();
-    const userIndex = users.findIndex(
-      u => u.passwordResetToken === token && u.passwordResetExpires && u.passwordResetExpires > Date.now()
-    );
+export const signOutUser = (): Promise<void> => {
+    return signOut(auth);
+};
 
-    if (userIndex === -1) {
-        throw new Error('Invalid or expired password reset token.');
-    }
+export const onAuthStateChanged = (callback: (user: any) => void) => {
+    return onFirebaseAuthStateChanged(auth, callback);
+};
 
-    users[userIndex].passwordHash = pseudoHash(newPassword);
-    delete users[userIndex].passwordResetToken;
-    delete users[userIndex].passwordResetExpires;
-    saveUsers(users);
+// --- Password Reset ---
+
+export const requestPasswordReset = (email: string): Promise<void> => {
+    return sendPasswordResetEmail(auth, email);
+};
+
+export const resetPassword = (oobCode: string, newPassword: string): Promise<void> => {
+    return confirmPasswordReset(auth, oobCode, newPassword);
 };
 
 
-export const addNotification = (
+// --- Notifications (Firestore) ---
+
+export const addNotification = async (
     userId: string, 
     message: string, 
     type: NotificationType,
     deliveryMethod: 'in-app' | 'email' = 'in-app',
     emailContent?: NotificationMessage['emailContent']
-): User | null => {
-    const users = getUsers();
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) return null;
+): Promise<void> => {
+    const userDocRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userDocRef);
 
+    if (!userSnap.exists()) return;
+
+    const userData = userSnap.data() as User;
     const newNotification: NotificationMessage = {
         id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         message,
         read: false,
-        createdAt: Date.now(),
+        createdAt: Date.now(), // Using client timestamp for sorting simplicity
         type,
         deliveryMethod,
         emailContent,
     };
     
-    users[userIndex].notifications.unshift(newNotification);
-    saveUsers(users);
+    const updatedNotifications = [newNotification, ...(userData.notifications || [])];
+    await updateDoc(userDocRef, { notifications: updatedNotifications });
 
-    const currentUser = getCurrentUser();
-    // Dispatch event for email simulation if it's an email and for the current user
-    if (deliveryMethod === 'email' && currentUser?.id === userId) {
-         const event = new CustomEvent('show-email-sim', { 
-            detail: {
-                ...emailContent,
-                recipient: users[userIndex].email
-            }
-        });
-        window.dispatchEvent(event);
-    } else if (deliveryMethod === 'in-app' && currentUser?.id === userId) {
-        // Dispatch event for in-app toast if it's for the current user
-        const event = new CustomEvent('show-toast', {
-            detail: newNotification
-        });
-        window.dispatchEvent(event);
-    }
+    // In a real application, a Cloud Function would listen to changes on the `users`
+    // collection and trigger the email/SMS sending.
+};
 
-    // Update current session if the notification is for the logged-in user
-    if (currentUser && currentUser.id === userId) {
-        const updatedUser = { ...currentUser, notifications: [newNotification, ...currentUser.notifications] };
-        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
-        return updatedUser;
+export const markNotificationsAsRead = async (userId: string): Promise<User | null> => {
+    const userDocRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userDocRef);
+    if (!userSnap.exists()) return null;
+
+    const userData = userSnap.data() as User;
+    const updatedNotifications = userData.notifications.map(n => ({ ...n, read: true }));
+    
+    await updateDoc(userDocRef, { notifications: updatedNotifications });
+
+    return { ...userData, notifications: updatedNotifications };
+};
+
+export const findAdminByDepartment = async (department: Department): Promise<User | null> => {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, 
+        where("isAdmin", "==", true), 
+        where("department", "==", department)
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data() as User;
     }
     return null;
 };
 
-export const markNotificationsAsRead = (userId: string): User | null => {
-    const users = getUsers();
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) return null;
-
-    users[userIndex].notifications.forEach(n => n.read = true);
-    saveUsers(users);
-
-    const currentUser = getCurrentUser();
-    if (currentUser && currentUser.id === userId) {
-        currentUser.notifications.forEach(n => n.read = true);
-        localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
-        return currentUser;
-    }
-    return null;
+// FIX: Added missing verifyMainAdminPasskey function used by the AdminPasskey component to resolve an import error.
+export const verifyMainAdminPasskey = (passkey: string): boolean => {
+    return passkey === SUPER_ADMIN_PASSKEY;
 };
-
-export const findAdminByDepartment = (department: Department): User | null => {
-    const users = getUsers();
-    const deptEmail = `${department.toLowerCase()}@city.gov`;
-    return users.find(u => u.isAdmin && u.email.toLowerCase() === deptEmail) || null;
-}

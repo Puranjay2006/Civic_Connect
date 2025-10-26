@@ -53,7 +53,13 @@ const DepartmentReportView: React.FC<DepartmentReportViewProps> = ({ report, dep
         <StatCard title="Total Requests" value={report.totalRequests} icon="fa-bullhorn" color="bg-blue-500" />
         <StatCard title="Resolved" value={report.resolvedRequests} icon="fa-check-circle" color="bg-green-500" />
         <StatCard title="Pending / In Progress" value={report.pendingRequests + report.inProgressRequests} icon="fa-hourglass-half" color="bg-yellow-500" />
-        <StatCard title="Overdue Cases" value={report.overdueRequests} icon="fa-triangle-exclamation" color="bg-red-500" />
+        <StatCard 
+          title="Overdue Cases" 
+          value={report.overdueRequests} 
+          icon="fa-triangle-exclamation" 
+          color="bg-red-500"
+          tooltipText="An issue is marked as overdue if it remains 'Pending' or 'In Progress' for more than 3 hours after being reported (for demo purposes)."
+        />
       </div>
        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard 
@@ -63,7 +69,14 @@ const DepartmentReportView: React.FC<DepartmentReportViewProps> = ({ report, dep
             color="bg-orange-500" 
             subtitle="minutes (demo)" 
           />
-          <StatCard title="SLA Compliance" value={`${report.slaComplianceRate.toFixed(1)}%`} icon="fa-award" color="bg-indigo-500" subtitle="Target: <3 days" />
+          <StatCard 
+            title="SLA Compliance" 
+            value={`${report.slaComplianceRate.toFixed(1)}%`} 
+            icon="fa-bullseye" 
+            color="bg-indigo-500" 
+            tooltipText="SLA (Service Level Agreement): The percentage of issues resolved within the target time frame (currently 3 hours for demo)."
+            subtitle="Target: <3 hours (demo)"
+          />
           <StatCard title="Avg Satisfaction" value={`${report.avgSatisfaction.toFixed(2)} / 5`} icon="fa-star" color="bg-teal-500" />
       </div>
       

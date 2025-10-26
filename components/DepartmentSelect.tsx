@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Department } from '../types';
 import { DEPARTMENTS } from '../constants';
@@ -7,12 +8,12 @@ interface DepartmentSelectProps {
   onDepartmentSelect: (department: Department | null) => void;
 }
 
-const departmentIcons: { [key in Department]: string } = {
-    [Department.Electrical]: 'fa-bolt',
-    [Department.Water]: 'fa-droplet',
-    [Department.Medical]: 'fa-briefcase-medical',
-    [Department.Sanitation]: 'fa-trash-alt',
-    [Department.Roads]: 'fa-road',
+const departmentInfo: { [key in Department]: { icon: string; gradient: string } } = {
+    [Department.Electrical]: { icon: 'fa-bolt', gradient: 'from-yellow-400 to-orange-500' },
+    [Department.Water]: { icon: 'fa-droplet', gradient: 'from-blue-400 to-cyan-500' },
+    [Department.Medical]: { icon: 'fa-briefcase-medical', gradient: 'from-red-400 to-pink-500' },
+    [Department.Sanitation]: { icon: 'fa-trash-alt', gradient: 'from-green-400 to-emerald-500' },
+    [Department.Roads]: { icon: 'fa-road', gradient: 'from-slate-500 to-slate-600' },
 }
 
 const DepartmentSelect: React.FC<DepartmentSelectProps> = ({ onDepartmentSelect }) => {
@@ -23,14 +24,15 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({ onDepartmentSelect 
         <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">Choose a department to view and manage its reported issues, or manage all departments.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {DEPARTMENTS.map(dept => (
+        {DEPARTMENTS.map((dept, index) => (
           <button
             key={dept}
             onClick={() => onDepartmentSelect(dept)}
-            className="group text-center p-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transform hover:-translate-y-2 transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+            className="group animate-pop-in text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transform hover:-translate-y-2 hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+            style={{ animationDelay: `${index * 100}ms` }}
           >
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 group-hover:bg-blue-500 dark:group-hover:bg-blue-600 transition-colors duration-300 mb-5 shadow-md">
-              <i className={`fa-solid ${departmentIcons[dept]} text-4xl text-slate-600 dark:text-slate-300 group-hover:text-white transition-colors duration-300`}></i>
+            <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br ${departmentInfo[dept].gradient} group-hover:rotate-12 transition-transform duration-300 mb-5 shadow-lg`}>
+              <i className={`fa-solid ${departmentInfo[dept].icon} text-4xl text-white`}></i>
             </div>
             <h3 className="text-xl font-bold text-slate-800 dark:text-white">{dept}</h3>
           </button>
@@ -38,10 +40,11 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({ onDepartmentSelect 
          <div className="md:col-span-2 lg:col-span-3">
              <button
                 onClick={() => onDepartmentSelect(null)}
-                className="group w-full text-center p-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 transform hover:-translate-y-2 transition-transform duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/50 flex flex-col sm:flex-row items-center justify-center gap-6"
+                className="group animate-pop-in w-full text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transform hover:-translate-y-2 hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/50 flex flex-col sm:flex-row items-center justify-center gap-6"
+                style={{ animationDelay: `${DEPARTMENTS.length * 100}ms` }}
              >
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 group-hover:bg-blue-500 dark:group-hover:bg-blue-600 transition-colors duration-300 shadow-md flex-shrink-0">
-                  <i className={`fa-solid fa-layer-group text-4xl text-slate-600 dark:text-slate-300 group-hover:text-white transition-colors duration-300`}></i>
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 group-hover:scale-110 transition-transform duration-300 shadow-lg flex-shrink-0">
+                  <i className={`fa-solid fa-layer-group text-4xl text-white`}></i>
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white">Manage All Departments</h3>
              </button>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { CivicIssue, Status, Category, View } from '../types';
 import CustomSelect from './CustomSelect';
-// FIX: Import STATUSES constant for strongly-typed select options.
 import { STATUSES } from '../constants';
+import { summarizeIssue } from '../services/geminiService';
 
 interface RatingProps {
   onRate: (rating: number) => void;
@@ -80,6 +80,9 @@ const timeSince = (date: number): string => {
 const IssueCard: React.FC<IssueCardProps> = ({ issue, isAdmin, onStatusChange, isMyReport, onRateIssue, onProvideFeedback }) => {
   const currentStatusStyle = statusStyles[issue.status];
   const [copied, setCopied] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(issue.id).then(() => {
@@ -88,6 +91,19 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, isAdmin, onStatusChange, i
     }, (err) => {
         console.error('Could not copy text: ', err);
     });
+  };
+
+  const handleSummarize = async () => {
+    setIsSummarizing(true);
+    setSummaryError(null);
+    try {
+      const result = await summarizeIssue(issue.description);
+      setSummary(result);
+    } catch (error) {
+      setSummaryError("Failed to get summary.");
+    } finally {
+      setIsSummarizing(false);
+    }
   };
 
   return (
@@ -110,6 +126,35 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, isAdmin, onStatusChange, i
         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2 leading-tight">{issue.title}</h3>
         <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 flex-grow">{issue.description}</p>
         
+        {/* AI Summary Section */}
+        {isAdmin && (
+          <div className="mb-4">
+            {summary || isSummarizing || summaryError ? (
+              <div className="p-3 bg-slate-100 dark:bg-slate-700/50 rounded-lg text-sm">
+                <p className="font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-2">
+                  <i className="fa-solid fa-wand-magic-sparkles text-blue-500"></i>
+                  <span>AI Summary</span>
+                </p>
+                {isSummarizing ? (
+                  <p className="text-slate-500 dark:text-slate-400 italic">Generating...</p>
+                ) : summaryError ? (
+                  <p className="text-red-500">{summaryError}</p>
+                ) : (
+                  <p className="text-slate-700 dark:text-slate-200">{summary}</p>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={handleSummarize}
+                className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors"
+              >
+                <i className="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Summarize with AI</span>
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="text-xs text-slate-500 dark:text-slate-400 mt-auto pt-4 border-t border-slate-200 dark:border-slate-700">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mb-2">
                 <div className="flex items-center gap-2" title={issue.id}>
