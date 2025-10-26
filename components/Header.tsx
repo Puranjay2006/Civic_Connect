@@ -10,53 +10,21 @@ interface HeaderProps {
   selectedDepartment: Department | null;
 }
 
-type Theme = 'light' | 'dark' | 'system';
-
 const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unreadNotifications, currentView, selectedDepartment }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isIssuesMenuOpen, setIsIssuesMenuOpen] = useState(false);
   const [isMobileIssuesOpen, setIsMobileIssuesOpen] = useState(false);
-  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
   const issuesMenuRef = useRef<HTMLDivElement>(null);
-  const themeMenuRef = useRef<HTMLDivElement>(null);
-
-  const [theme, setTheme] = useState<Theme>('system');
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
-  }, []);
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    const isDark =
-      theme === 'dark' ||
-      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
-    root.classList.toggle('dark', isDark);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (issuesMenuRef.current && !issuesMenuRef.current.contains(event.target as Node)) {
         setIsIssuesMenuOpen(false);
       }
-      if (themeMenuRef.current && !themeMenuRef.current.contains(event.target as Node)) {
-        setIsThemeMenuOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const ThemeIcon = () => {
-    if (theme === 'light') return <i className="fa-solid fa-sun text-xl"></i>;
-    if (theme === 'dark') return <i className="fa-solid fa-moon text-xl"></i>;
-    return <i className="fa-solid fa-desktop text-xl"></i>;
-  };
 
   const NavLink: React.FC<{ view: View; children: React.ReactNode }> = ({ view, children }) => (
     <button
@@ -196,32 +164,6 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, navigateTo, unre
                 </div>
               </>
             ) : null}
-            {/* Theme Switcher */}
-            <div className="relative" ref={themeMenuRef}>
-              <button
-                onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
-                className="text-slate-600 dark:text-slate-300 p-2 rounded-full transition-all duration-300 transform border-2 border-transparent hover:-translate-y-0.5 hover:shadow-lg hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                aria-label="Toggle theme"
-              >
-                <ThemeIcon />
-              </button>
-              {isThemeMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-36 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden dropdown-fade-in">
-                  <button onClick={() => { setTheme('light'); setIsThemeMenuOpen(false); }} className={`w-full text-left flex items-center gap-3 px-4 py-2 text-sm font-medium ${theme === 'light' ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300'} hover:bg-slate-100 dark:hover:bg-slate-700`}>
-                    <i className="fa-solid fa-sun w-5 text-center"></i>
-                    <span>Light</span>
-                  </button>
-                  <button onClick={() => { setTheme('dark'); setIsThemeMenuOpen(false); }} className={`w-full text-left flex items-center gap-3 px-4 py-2 text-sm font-medium ${theme === 'dark' ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300'} hover:bg-slate-100 dark:hover:bg-slate-700`}>
-                    <i className="fa-solid fa-moon w-5 text-center"></i>
-                    <span>Dark</span>
-                  </button>
-                  <button onClick={() => { setTheme('system'); setIsThemeMenuOpen(false); }} className={`w-full text-left flex items-center gap-3 px-4 py-2 text-sm font-medium ${theme === 'system' ? 'text-blue-600' : 'text-slate-700 dark:text-slate-300'} hover:bg-slate-100 dark:hover:bg-slate-700`}>
-                    <i className="fa-solid fa-desktop w-5 text-center"></i>
-                    <span>System</span>
-                  </button>
-                </div>
-              )}
-            </div>
 
             <div className="md:hidden">
                 <button

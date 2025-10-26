@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Department } from '../types';
 import { DEPARTMENTS } from '../constants';
@@ -28,7 +27,7 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({ onDepartmentSelect 
           <button
             key={dept}
             onClick={() => onDepartmentSelect(dept)}
-            className="group animate-pop-in text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transform hover:-translate-y-2 hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/50"
+            className="group animate-pop-in float-animation text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border-2 border-slate-200 dark:border-slate-700 transform hover:animate-none hover:-translate-y-4 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30 dark:hover:shadow-blue-400/30 hover:border-blue-500/50 transition-all duration-300 focus:outline-none focus:ring-4 ring-offset-2 dark:ring-offset-slate-900 ring-blue-500/0 focus:ring-blue-500/50"
             style={{ animationDelay: `${index * 100}ms` }}
           >
             <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br ${departmentInfo[dept].gradient} group-hover:rotate-12 transition-transform duration-300 mb-5 shadow-lg`}>
@@ -40,7 +39,7 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({ onDepartmentSelect 
          <div className="md:col-span-2 lg:col-span-3">
              <button
                 onClick={() => onDepartmentSelect(null)}
-                className="group animate-pop-in w-full text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transform hover:-translate-y-2 hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-500/50 flex flex-col sm:flex-row items-center justify-center gap-6"
+                className="group animate-pop-in float-animation w-full text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border-2 border-slate-200 dark:border-slate-700 transform hover:animate-none hover:-translate-y-4 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30 dark:hover:shadow-blue-400/30 hover:border-blue-500/50 transition-all duration-300 focus:outline-none focus:ring-4 ring-offset-2 dark:ring-offset-slate-900 ring-blue-500/0 focus:ring-blue-500/50 flex flex-col sm:flex-row items-center justify-center gap-6"
                 style={{ animationDelay: `${DEPARTMENTS.length * 100}ms` }}
              >
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 group-hover:scale-110 transition-transform duration-300 shadow-lg flex-shrink-0">
