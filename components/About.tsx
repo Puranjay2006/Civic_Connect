@@ -68,13 +68,15 @@ const About: React.FC<AboutProps> = ({ navigateTo }) => {
                   Get Started Free
                 </span>
               </button>
-              <button
-                onClick={() => navigateTo('dashboard')}
+              <a
+                href="https://drive.google.com/file/d/12lENjr06F25Grao6IUu95HM4YCz_1BLo/view?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="px-8 py-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl text-slate-800 dark:text-white font-bold rounded-2xl border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 hover:scale-105 shadow-lg flex items-center justify-center gap-2"
               >
                 <i className="fa-solid fa-play"></i>
                 See Live Demo Walkthrough
-              </button>
+              </a>
             </div>
 
             {/* Scroll Indicator */}

@@ -12,7 +12,9 @@
 
 **🏆 Youth Solves for India 2026 - Hackathon Project**
 
-[Live Demo](#) · [Report Bug](https://github.com/Puranjay2006/Civic_Connect/issues) · [Request Feature](https://github.com/Puranjay2006/Civic_Connect/issues)
+[🎬 Watch Live Demo](https://drive.google.com/file/d/12lENjr06F25Grao6IUu95HM4YCz_1BLo/view?usp=sharing)
+
+> 📝 *Note: The demo video showcases an earlier version of the UI design. The current version features an updated frontend with improved aesthetics, but all core functionality remains the same. Additionally, Google Maps API integration has been added for real-time visualization of reported and resolved issue locations.*
 
 </div>
 
