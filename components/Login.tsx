@@ -74,9 +74,18 @@ const Login: React.FC<LoginProps> = ({ onLogin, navigateTo, message }) => {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-            Password
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={() => navigateTo('forgot-password')}
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            >
+              Forgot password?
+            </button>
+          </div>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <i className="fa-solid fa-lock text-slate-400"></i>

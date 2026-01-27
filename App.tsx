@@ -23,6 +23,8 @@ import PublicReports from './components/PublicReports';
 import AdminRoleSelect from './components/AdminRoleSelect';
 import Notification from './components/Notification';
 import Modal from './components/Modal';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 
 interface NavState {
   view: View;
@@ -162,6 +164,10 @@ const App: React.FC = () => {
         return <DepartmentLogin onLogin={handleLogin} />;
       case 'signup':
         return <SignUp onSignUp={handleSignUp} navigateTo={navigateTo} />;
+      case 'forgot-password':
+        return <ForgotPassword navigateTo={navigateTo} />;
+      case 'reset-password':
+        return currentNavItem.token ? <ResetPassword token={currentNavItem.token} navigateTo={navigateTo} /> : <ForgotPassword navigateTo={navigateTo} />;
       case 'notifications':
         return currentUser ? <NotificationsPage currentUser={currentUser} setCurrentUser={setCurrentUser} /> : <Login onLogin={handleLogin} navigateTo={navigateTo} />;
       case 'my-reports':
