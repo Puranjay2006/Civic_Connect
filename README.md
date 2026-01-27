@@ -12,9 +12,15 @@
 
 **🏆 Youth Solves for India 2026 - Hackathon Project**
 
+**⚡ Built in 48 Hours at the NoBroker.com x Masai Hackathon**
+
 [🎬 Watch Live Demo](https://drive.google.com/file/d/12lENjr06F25Grao6IUu95HM4YCz_1BLo/view?usp=sharing)
 
 > 📝 *Note: The demo video showcases an earlier version of the UI design. The current version features an updated frontend with improved aesthetics, but all core functionality remains the same. Additionally, Google Maps API integration has been added for real-time visualization of reported and resolved issue locations.*
+
+### 👥 Team
+
+**Puranjay Gambhir** · **Himanshu Gautre** · **MD Azaroddin**
 
 </div>
 
@@ -43,7 +49,9 @@
 
 **Civic Connect** is an AI-powered web application designed to bridge the gap between citizens and local government departments. It provides a streamlined, intuitive platform for reporting civic issues such as potholes, garbage accumulation, streetlight outages, and more.
 
-Built for the **Youth Solves for India 2026** hackathon, Civic Connect aims to transform how communities interact with municipal services by leveraging modern web technologies and artificial intelligence to make civic engagement accessible, efficient, and transparent.
+Originally built in just **48 hours** at the **NoBroker.com x Masai Hackathon**, Civic Connect was created for the **Youth Solves for India 2026** initiative. Our mission is to transform civic engagement from a passive complaint into a proactive, transparent, and collaborative process—solving the problem of citizens not having a defined system to report local issues to the necessary government departments.
+
+Civic Connect leverages modern web technologies and artificial intelligence to make civic engagement accessible, efficient, and transparent.
 
 > ⚠️ **Note:** This is currently a **frontend-only application**. All data is stored in the browser's localStorage. Backend integration with a persistent database is planned for future development.
 
