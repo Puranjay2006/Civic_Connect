@@ -20,7 +20,7 @@
 
 ### 👥 Team
 
-**Puranjay Gambhir** · **Himanshu Gautre** · **MD Azaroddin**
+**[Puranjay Gambhir](https://www.linkedin.com/in/puranjay-gambhir-a342221bb/)** · **Himanshu Gautre** · **MD Azaroddin**
 
 </div>
 
