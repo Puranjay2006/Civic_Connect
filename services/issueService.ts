@@ -1,0 +1,197 @@
+import { CivicIssue, Status, User, NotificationType, Department } from '../types';
+import { addNotification, findAdminByDepartment } from './authService';
+
+const ISSUES_KEY = 'civic-issues';
+
+// Helper to get issues from localStorage, also exported for use in components
+export const getIssues = (): CivicIssue[] => {
+  const issuesJson = localStorage.getItem(ISSUES_KEY);
+  return issuesJson ? JSON.parse(issuesJson) : [];
+};
+
+// Helper to save issues to localStorage
+const saveIssues = (issues: CivicIssue[]) => {
+  localStorage.setItem(ISSUES_KEY, JSON.stringify(issues));
+};
+
+// Get a single issue by its ID
+export const getIssueById = (id: string): CivicIssue | undefined => {
+  const issues = getIssues();
+  return issues.find(issue => issue.id === id);
+};
+
+// Add a new issue
+export const addIssue = (issueData: Omit<CivicIssue, 'id' | 'createdAt' | 'status' | 'userId' | 'userEmail' | 'username' | 'acknowledgedAt' | 'resolvedAt' | 'rating'>, user: User): { newIssue: CivicIssue } => {
+  const issues = getIssues();
+  const newIssue: CivicIssue = {
+    ...issueData,
+    id: `issue-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: Date.now(),
+    acknowledgedAt: null,
+    resolvedAt: null,
+    status: Status.Pending,
+    userId: user.id,
+    userEmail: user.email,
+    username: user.username,
+    rating: null,
+  };
+  
+  const updatedIssues = [...issues, newIssue];
+  saveIssues(updatedIssues);
+  
+  // Notify the user who created the issue
+  addNotification(user.id, `Your issue report "${newIssue.title}" has been successfully submitted.`, NotificationType.General);
+  
+  // Notify the department admin (in-app notification only)
+  const admin = findAdminByDepartment(newIssue.department);
+  if (admin) {
+      addNotification(admin.id, `New issue "${newIssue.title}" for your department.`, NotificationType.General);
+  }
+
+  return { newIssue };
+};
+
+// Update the status of an existing issue
+export const updateIssueStatus = (id: string, newStatus: Status, adminUser: User): { updatedIssue: CivicIssue | null; } => {
+  const issues = getIssues();
+  const issueIndex = issues.findIndex(issue => issue.id === id);
+
+  if (issueIndex === -1) {
+    console.error(`Issue with id ${id} not found.`);
+    return { updatedIssue: null };
+  }
+
+  const originalStatus = issues[issueIndex].status;
+  if (originalStatus === newStatus) {
+    return { updatedIssue: issues[issueIndex] }; // No change
+  }
+
+  const updatedIssue = { ...issues[issueIndex], status: newStatus };
+  
+  if (originalStatus === Status.Pending && (newStatus === Status.InProgress || newStatus === Status.Resolved)) {
+    updatedIssue.acknowledgedAt = Date.now();
+  }
+  if (newStatus === Status.Resolved) {
+    updatedIssue.resolvedAt = Date.now();
+  }
+
+  issues[issueIndex] = updatedIssue;
+  saveIssues(issues);
+
+  // Notify the admin who made the change
+  addNotification(
+      adminUser.id,
+      `You have marked the status of the report "${updatedIssue.title}" as ${newStatus}.`,
+      NotificationType.General
+  );
+
+  // Notify the user about status change (in-app notification only)
+  if (newStatus === Status.Resolved) {
+      addNotification(updatedIssue.userId, `Your report "${updatedIssue.title}" has been resolved. Please rate our service!`, NotificationType.StatusUpdate);
+      return { updatedIssue };
+  } else {
+      addNotification(updatedIssue.userId, `The status of your report "${updatedIssue.title}" has been updated to "${newStatus}".`, NotificationType.StatusUpdate);
+      return { updatedIssue };
+  }
+};
+
+export const addRatingToIssue = (id: string, rating: number): { updatedIssue: CivicIssue | null; } => {
+    const issues = getIssues();
+    const issueIndex = issues.findIndex(issue => issue.id === id);
+
+    if (issueIndex === -1) {
+        console.error(`Issue with id ${id} not found.`);
+        return { updatedIssue: null };
+    }
+
+    const updatedIssue = { ...issues[issueIndex], rating };
+    issues[issueIndex] = updatedIssue;
+    saveIssues(issues);
+
+    // Notify user
+    addNotification(updatedIssue.userId, `Your ${rating}-star rating for "${updatedIssue.title}" has been recorded. Thank you!`, NotificationType.General);
+
+    // Notify department admin
+    const admin = findAdminByDepartment(updatedIssue.department);
+    if (admin) {
+        addNotification(admin.id, `A user gave a ${rating}-star rating for the resolved issue: "${updatedIssue.title}".`, NotificationType.RatingReceived);
+    }
+
+    return { updatedIssue };
+};
+
+export const addFeedbackToIssue = (id: string, feedback: string): { updatedIssue: CivicIssue | null; } => {
+    const issues = getIssues();
+    const issueIndex = issues.findIndex(issue => issue.id === id);
+
+    if (issueIndex === -1) {
+        console.error(`Issue with id ${id} not found.`);
+        return { updatedIssue: null };
+    }
+
+    const updatedIssue = { ...issues[issueIndex], feedback };
+    issues[issueIndex] = updatedIssue;
+    saveIssues(issues);
+    
+    // Notify user
+    addNotification(updatedIssue.userId, `Your feedback for "${updatedIssue.title}" has been received. Thank you!`, NotificationType.FeedbackReceived);
+
+    // Notify department admin
+    const admin = findAdminByDepartment(updatedIssue.department);
+    if (admin) {
+        const feedbackText = updatedIssue.feedback || '';
+        const truncatedFeedback = feedbackText.length > 50 ? `${feedbackText.substring(0, 50)}...` : feedbackText;
+        const ratingText = updatedIssue.rating ? ` — Rating: ${updatedIssue.rating} ★` : '';
+        
+        addNotification(
+            admin.id,
+            `New feedback from ${updatedIssue.username}: "${truncatedFeedback}"${ratingText}`,
+            NotificationType.FeedbackReceived
+        );
+    }
+
+    return { updatedIssue };
+};
+
+// Delete an issue
+export const deleteIssue = (id: string, userId: string, isAdmin: boolean): boolean => {
+    const issues = getIssues();
+    const issueIndex = issues.findIndex(issue => issue.id === id);
+
+    if (issueIndex === -1) {
+        console.error(`Issue with id ${id} not found.`);
+        return false;
+    }
+
+    const issue = issues[issueIndex];
+    
+    // Check if user has permission to delete (own issue or admin)
+    if (issue.userId !== userId && !isAdmin) {
+        console.error('User does not have permission to delete this issue.');
+        return false;
+    }
+
+    // Remove the issue
+    issues.splice(issueIndex, 1);
+    saveIssues(issues);
+
+    return true;
+};
+
+// Get issues by user
+export const getIssuesByUser = (userId: string): CivicIssue[] => {
+    const issues = getIssues();
+    return issues.filter(issue => issue.userId === userId);
+};
+
+// Get issues by department
+export const getIssuesByDepartment = (department: string): CivicIssue[] => {
+    const issues = getIssues();
+    return issues.filter(issue => issue.department === department);
+};
+
+// Get issues by status
+export const getIssuesByStatus = (status: string): CivicIssue[] => {
+    const issues = getIssues();
+    return issues.filter(issue => issue.status === status);
+};

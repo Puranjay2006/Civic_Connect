@@ -1,0 +1,36 @@
+# Core Framework
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+
+# Database
+motor==3.3.2
+pymongo==4.6.1
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+
+# Validation & Serialization
+pydantic[email]==2.6.1
+pydantic-settings==2.2.1
+
+# Environment & Configuration
+python-dotenv==1.0.1
+
+# File handling
+aiofiles>=23.2.1
+# Pillow>=10.2.0  # Optional: for image processing
+
+# HTTP Client (for external APIs)
+httpx==0.26.0
+
+# Google Gemini AI
+google-genai>=1.0.0
+
+# Date/Time utilities
+python-dateutil==2.8.2
+
+# CORS
+starlette==0.36.3
