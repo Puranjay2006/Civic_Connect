@@ -11,7 +11,7 @@
 
 **⚡ Built in 48 Hours at the NoBroker.com x Masai Hackathon**
 
-🌐 **[Live App](https://civic-connect-8y5i.onrender.com)**
+🌐 **[Live App: https://civic-connect-8y5i.onrender.com](https://civic-connect-8y5i.onrender.com)**
 
 [🎬 Watch Live Demo](https://drive.google.com/file/d/12lENjr06F25Grao6IUu95HM4YCz_1BLo/view?usp=sharing)
 
