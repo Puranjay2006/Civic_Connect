@@ -1,4 +1,4 @@
-# 🏛️ Civic Connect
+# Civic Connect
 
 ### AI-Powered Civic Issue Reporting Platform
 
